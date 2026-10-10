@@ -1,0 +1,24 @@
+{
+ "cards_version": "v1.0",
+ "approval": {
+  "decided_by": "ChatGPT Pro 盲検判定（本人が判定を委任）",
+  "date": "2026-10-10",
+  "rounds": [
+   {
+    "round": 1,
+    "result": "承認0/修正12",
+    "packet": "consult/audit/cards_judgment_packet.md",
+    "response": "consult/20261010_chatgpt_cards_judgment_raw.md",
+    "conversation": "https://chatgpt.com/c/6aca3ebc-5670-83ee-918a-0a9420404088"
+   },
+   {
+    "round": 2,
+    "result": "承認9/修正3（PC-005, PC-010, PC-012 は差し替え文を適用）",
+    "packet": "consult/audit/cards_judgment_packet_v2.md",
+    "response": "consult/20261010_chatgpt_cards_judgment_v2_raw.md",
+    "conversation": "https://chatgpt.com/c/6aca4529-5004-83e8-b210-3c0751988fe9"
+   }
+  ],
+  "note": "人による全件確認は未了。別モデルの盲検判定（出典スパンとの対応）を経て公開。"
+ }
+}

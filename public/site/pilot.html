@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>大学別の経時と追加審査の前後 | JACME評価報告書コーパス</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<header id="hdr"></header>
+<main>
+  <h1>大学別の経時と追加審査の前後（IR・内部質保証の対象6大学）</h1>
+  <p class="lead">公開データ（審査イベント、判定、承認済みカード）だけから作った画面。観察や主体の表は含まない。</p>
+  <div class="note">後年再評価を含む報告書は観察期間を併記する。追加審査の「変化」は判定の文字列の比較で、追加審査は改善報告書に基づく再評価であり本審査とは手続きが異なる。</div>
+  <h2>大学別の経時</h2>
+  <div id="timelines"></div>
+  <h2>追加審査の前後（下位領域ごとの判定）</h2>
+  <div id="additional"></div>
+</main>
+<footer id="ftr"></footer>
+<script src="common.js"></script>
+<script>
+renderHeader('pilot.html');
+(async () => {
+  const [inst, events, judg, concepts, stats] = await Promise.all([loadJSON('institutions'), loadJSON('events'), loadJSON('judgments'), loadJSON('concepts'), loadJSON('stats')]);
+  let cards = []; try { cards = await loadJSON('practice_cards'); } catch (e) {}
+  document.getElementById('ftr').textContent = `リリース ${stats.release_version}。出典: 日本医学教育評価機構「評価結果」。`;
+  const I = Object.fromEntries(inst.map(i => [i.institution_id, i])); const CN = Object.fromEntries(concepts.map(c => [c.concept_id, c.name]));
+  const PILOT = [...new Set(cards.map(c => c.institution_id))];
+  const byEvent = {}; for (const j of judg) (byEvent[j.event_id] ??= []).push(j);
+  const jj = (ev, c) => { const r = (byEvent[ev.event_id] || []).find(j => j.concept_id === c && j.level === 'B'); return r ? r.judgment + (r.judgment_before ? '←' + r.judgment_before : '') : '—'; };
+  const pdf = (e) => e.source_url ? `<a href="${esc(e.source_url)}" target="_blank" rel="noopener">PDF</a>` : '';
+  document.getElementById('timelines').innerHTML = PILOT.map(u => {
+    const evs = events.filter(e => e.institution_id === u && e.review_type !== 'notice').sort((a, b) => (a.eval_year || '').localeCompare(b.eval_year || ''));
+    const cs = cards.filter(c => c.institution_id === u);
+    return `<h3>${esc(I[u].name)}</h3><table><thead><tr><th>年度</th><th>審査</th><th>基準版</th><th>観察期間</th><th>7.1B</th><th>7.2B</th><th>7.3B</th><th>元PDF</th></tr></thead><tbody>` +
+      evs.map(e => `<tr><td>${esc(e.eval_year)}</td><td>${LBL.review_type[e.review_type]}${e.cycle ? ' 第' + esc(e.cycle) + '巡' : ''}</td><td>${esc(e.standard_version_declared)}</td><td>${e.retrospective_reassessment === 'true' ? esc(e.observation_start) + '〜' + esc(e.observation_end) + '（後年再評価）' : '—'}</td><td>${esc(jj(e, '7.1'))}</td><td>${esc(jj(e, '7.2'))}</td><td>${esc(jj(e, '7.3'))}</td><td>${pdf(e)}</td></tr>`).join('') +
+      `</tbody></table><p class="small">カード: ${cs.map(c => `<a href="cards.html#${esc(c.card_id)}">${esc(c.card_id)}</a> ${esc(c.title)}`).join('；') || 'なし'}</p>`;
+  }).join('');
+  const adds = events.filter(e => e.review_type === 'additional' && PILOT.includes(e.institution_id));
+  document.getElementById('additional').innerHTML = adds.map(e => {
+    const rows = (byEvent[e.event_id] || []).filter(j => j.judgment_before).sort((a, b) => a.concept_id.localeCompare(b.concept_id, undefined, { numeric: true }) || a.level.localeCompare(b.level));
+    const ch = j => ({ '不適合→部分的適合': '改善', '部分的適合→適合': '改善', '不適合→適合': '改善' })[j.judgment_before + '→' + j.judgment] || (j.judgment_before === j.judgment ? '変化なし' : '低下');
+    return `<h3>${esc(I[e.institution_id].name)} ${esc(e.eval_year)}年度 追加審査 ${pdf(e)}</h3><table><thead><tr><th>下位領域</th><th>水準</th><th>本審査時</th><th>追加審査</th><th>変化</th></tr></thead><tbody>` +
+      rows.map(j => `<tr><td>${esc(j.concept_id)} ${esc(CN[j.concept_id] || '')}</td><td>${esc(j.level)}</td><td>${esc(j.judgment_before)}</td><td>${esc(j.judgment)}</td><td>${ch(j)}</td></tr>`).join('') + '</tbody></table>';
+  }).join('') || '<p class="small">該当なし</p>';
+})().catch(err => { document.getElementById('timelines').textContent = 'データの読み込みに失敗: ' + err.message; });
+</script>
+</body>
+</html>

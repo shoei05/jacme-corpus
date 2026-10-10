@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>統計・品質・更新履歴 | JACME評価報告書コーパス</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<header id="hdr"></header>
+<main>
+  <h1>統計・品質・更新履歴</h1>
+  <p class="lead">収録範囲、検証結果、未確認の件数、リリース情報。</p>
+  <h2>収録範囲</h2>
+  <div class="cards" id="cards"></div>
+  <h2>審査イベントの内訳</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px">
+    <div><h3 class="small">評価年度別（件）</h3><div class="bars" id="by-year"></div></div>
+    <div><h3 class="small">審査種別（件）</h3><div class="bars" id="by-type"></div>
+         <h3 class="small">基準系列（件）</h3><div class="bars" id="by-family"></div></div>
+  </div>
+  <h2>判定とコメントの分布</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px">
+    <div><h3 class="small">判定（基本的水準）</h3><div class="bars" id="jB"></div></div>
+    <div><h3 class="small">判定（質的向上のための水準）</h3><div class="bars" id="jQ"></div></div>
+    <div><h3 class="small">コメント種別（件）</h3><div class="bars" id="ctype"></div></div>
+    <div><h3 class="small">コメントの語調（件）</h3><div class="bars" id="ctone"></div></div>
+  </div>
+  <div id="theme-sec" hidden><h2>改革テーマの付与（自動タグ）</h2>
+  <p class="small" id="theme-note"></p>
+  <div class="bars" id="themes"></div></div>
+  <h2>品質と未確認</h2>
+  <div class="cards" id="quality"></div>
+  <table id="flags" style="max-width:640px"><thead><tr><th>フラグ</th><th class="num">あり</th><th class="num">なし</th><th class="num">未確認</th><th class="num">対象外</th></tr></thead><tbody></tbody></table>
+  <p class="small">後年再評価は「本審査の判定が実地調査後の改善を含むか」を指し、追加審査・公表文は「対象外」。値は型付き判定モデル（TypeSafe Jev）の確率を閾値（0.8以上=あり、0.2以下=なし）で写像したもの。「未確認」は中間の確率。版混在は、下位領域の選択問題と本文の版の明記がそろう場合に「あり」。人による確認は未了。</p>
+  <h2>更新履歴</h2>
+  <table id="log" style="max-width:800px"><thead><tr><th>日付</th><th>版</th><th>内容</th></tr></thead><tbody></tbody></table>
+  <h2>方針</h2>
+  <ul id="notes" class="small"></ul>
+</main>
+<footer id="ftr"></footer>
+<script src="common.js"></script>
+<script>
+renderHeader('stats.html');
+function bars(el, obj, labeler = k => k) {
+  const entries = Object.entries(obj); const max = Math.max(...entries.map(([, v]) => v), 1);
+  el.innerHTML = entries.map(([k, v]) => `<span class="lab">${esc(labeler(k))}</span><div><div class="bar" style="width:${(v / max * 100).toFixed(1)}%" title="${esc(labeler(k))}: ${v}"></div></div><span class="val">${v}</span>`).join('');
+}
+(async () => {
+  const s = await loadJSON('stats');
+  document.getElementById('ftr').textContent = `リリース ${s.release_version}（生成 ${s.built_at}）。出典: ${s.source_page}`;
+  const card = (k, v, sub = '') => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
+  document.getElementById('cards').innerHTML = card('大学', s.n_institutions, `2巡そろう大学 ${s.n_institutions_two_cycles}`) + card('審査イベント（文書）', s.n_events, `元PDF ${s.n_source_pdfs} 件（目次PDF含む）`) +
+    card('下位領域判定', s.n_judgments.toLocaleString(), '36下位領域 × B/Q') + card('コメント', s.n_comments.toLocaleString(), '件数のみ公開。本文は元PDFで確認') + card('取得日', s.fetched_date, 'JACME 評価結果ページ');
+  bars(document.getElementById('by-year'), s.events_by_year, k => k === '不明' ? k : k + '年度');
+  bars(document.getElementById('by-type'), s.events_by_review_type, k => LBL.review_type[k] || k);
+  bars(document.getElementById('by-family'), s.events_by_standard_family);
+  bars(document.getElementById('jB'), s.judgments_by_level_value.B); bars(document.getElementById('jQ'), s.judgments_by_level_value.Q);
+  bars(document.getElementById('ctype'), s.comments_by_type); bars(document.getElementById('ctone'), s.comments_by_tone, k => LBL.tone[k] || k);
+  if (s.themes && s.themes.comments_by_theme) {
+    document.getElementById('theme-sec').hidden = false;
+    document.getElementById('theme-note').textContent = `${s.themes.note} コードブック ${s.themes.codebook}、モデル ${s.themes.model}。件数はコメント数（参考値）。行列画面では大学数で表示する。`;
+    const ordered = Object.fromEntries(Object.entries(s.themes.comments_by_theme).sort((a, b) => a[0].localeCompare(b[0])));
+    bars(document.getElementById('themes'), ordered, k => k.split('_')[0]);
+  }
+  if (s.practice_cards && s.practice_cards.n_approved) { const d = document.createElement('p'); d.className = 'small'; d.textContent = `取り組みカード: ${s.practice_cards.n_approved} 枚公開（${s.practice_cards.version}）。${s.practice_cards.note}`; document.getElementById('theme-sec').after(d); }
+  const v = s.validation;
+  document.getElementById('quality').innerHTML = card('検証チェック', `${v.n_checks - v.n_fail}/${v.n_checks}`, v.n_fail ? `失敗 ${v.n_fail}` : '全て通過') +
+    card('総評の集計との照合', `${v.summary_counts_checked - v.summary_counts_mismatch}/${v.summary_counts_checked}`, '集計文のある文書で項目別抽出と一致') +
+    card('隔離した判定行', v.n_quarantined_judgments, '原本確認待ち（judgments から除外）');
+  document.querySelector('#flags tbody').innerHTML = Object.entries(s.flags).map(([f, c]) => `<tr><td>${f === 'retrospective_reassessment' ? '後年再評価（改善状況を併せた再評価）' : '基準版の混在'}</td><td class="num">${c.true || 0}</td><td class="num">${c.false || 0}</td><td class="num">${c.unknown || 0}</td><td class="num">${c.not_applicable || 0}</td></tr>`).join('');
+  document.querySelector('#log tbody').innerHTML = s.changelog.map(c => `<tr><td>${esc(c.date)}</td><td>${esc(c.version)}</td><td>${esc(c.note)}</td></tr>`).join('');
+  document.getElementById('notes').innerHTML = s.notes.map(n => `<li>${esc(n)}</li>`).join('');
+})().catch(err => { document.getElementById('cards').textContent = 'データの読み込みに失敗: ' + err.message; });
+</script>
+</body>
+</html>

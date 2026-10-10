@@ -1,0 +1,49 @@
+:root {
+  --ink: #1f2933; --ink-2: #52606d; --ink-3: #7b8794; --line: #d9dee3; --bg: #ffffff; --bg-2: #f5f7f9;
+  --accent: #2b6f8f; --accent-soft: #dbe9f0; --warn-bg: #fff6e0; --warn-ink: #7a5600;
+  --seq-0: #f3f7fa; --seq-1: #cfe1ea; --seq-2: #9ec4d6; --seq-3: #63a0bb; --seq-4: #2b6f8f; --seq-5: #194a61;
+}
+:root[data-theme="dark"] { --ink: #e6e9ec; --ink-2: #b7bec6; --ink-3: #8a939c; --line: #3a424b; --bg: #15191e; --bg-2: #1e242b; --accent: #6fb0d0; --accent-soft: #24404d; --warn-bg: #3a2f10; --warn-ink: #f0d58a; --seq-0: #1e242b; --seq-1: #27404c; --seq-2: #2f5a6c; --seq-3: #3b7a93; --seq-4: #5a9cb8; --seq-5: #8cc0d8; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Hiragino Sans", "BIZ UDPGothic", "Yu Gothic", "Noto Sans JP", sans-serif; font-size: 15px; line-height: 1.6; }
+header { border-bottom: 1px solid var(--line); background: var(--bg); }
+header .inner { max-width: 1200px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; }
+header .title { font-weight: 700; font-size: 17px; }
+header nav a { margin-right: 16px; color: var(--accent); text-decoration: none; }
+header nav a.current { font-weight: 700; border-bottom: 2px solid var(--accent); }
+main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 22px; margin: 8px 0 4px; }
+h2 { font-size: 17px; margin: 24px 0 8px; }
+p.lead { color: var(--ink-2); margin: 0 0 12px; }
+.note { background: var(--warn-bg); color: var(--warn-ink); border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 14px; }
+.filters { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; margin: 12px 0 16px; }
+.filters label { display: flex; flex-direction: column; font-size: 13px; color: var(--ink-2); gap: 2px; }
+select, input[type=search] { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); min-width: 140px; }
+.count { color: var(--ink-2); font-size: 14px; margin: 4px 0 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: var(--bg-2); font-weight: 600; position: sticky; top: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+#tbl td:nth-child(n+3):nth-child(-n+10), #tbl td.num { white-space: nowrap; }
+.tag { display: inline-block; white-space: nowrap; font-size: 12px; padding: 1px 6px; border-radius: 10px; background: var(--bg-2); color: var(--ink-2); border: 1px solid var(--line); }
+.tag.unknown { color: var(--ink-3); }
+.tag.true { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }
+.matrix td.cell { text-align: center; font-variant-numeric: tabular-nums; min-width: 92px; }
+.matrix td.na { color: var(--ink-3); background: var(--bg); }
+.matrix td.name { white-space: nowrap; }
+.legend { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink-2); margin: 8px 0; flex-wrap: wrap; }
+.legend .sw { width: 22px; height: 14px; border: 1px solid var(--line); display: inline-block; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--bg); }
+.card .k { font-size: 13px; color: var(--ink-2); }
+.card .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.card .s { font-size: 12px; color: var(--ink-3); }
+.bars { display: grid; grid-template-columns: max-content 1fr max-content; gap: 4px 10px; align-items: center; font-size: 14px; max-width: 640px; }
+.bars .bar { height: 14px; background: var(--accent); border-radius: 0 3px 3px 0; min-width: 2px; }
+.bars .lab { color: var(--ink-2); white-space: nowrap; }
+.bars .val { font-variant-numeric: tabular-nums; text-align: right; }
+footer { color: var(--ink-3); font-size: 13px; border-top: 1px solid var(--line); margin-top: 32px; padding: 16px; text-align: center; }
+.small { font-size: 13px; color: var(--ink-2); }
+@media (max-width: 700px) { .filters label { flex: 1 1 45%; } select { min-width: 0; width: 100%; } }

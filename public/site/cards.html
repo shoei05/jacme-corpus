@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>取り組みカード | JACME評価報告書コーパス</title>
+<link rel="stylesheet" href="common.css">
+<style>
+.card{border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:14px 0}.card h3{margin:0 0 6px;font-size:16px}.sec{margin:6px 0}.sec b{color:var(--ink-2)}.hyp{background:var(--bg-2);border-left:3px solid var(--ink-3);padding:6px 10px}sup a{text-decoration:none}
+</style>
+</head>
+<body>
+<header id="hdr"></header>
+<main>
+  <h1>取り組みカード（IR・内部質保証）</h1>
+  <p class="lead">報告書に記載された「分析結果を意思決定につなぐ仕組み」について、出典のページを示しながらこちらの言葉で整理したもの。原文の引用はしない。</p>
+  <div class="note">カードの文章は、出典スパンとの対応を別モデル（ChatGPT）の盲検判定で確認したうえで公開している。人による全件確認は未了。各節の [文書 p.] は JACME の元 PDF の該当ページを開く。D1〜D4 は報告書の記述を分類したもので、大学の評価や順位ではない。</div>
+  <div class="filters">
+    <label>大学<select id="f-univ"></select></label>
+    <label>型<select id="f-pattern"></select></label>
+  </div>
+  <div class="count" id="count"></div>
+  <div id="cards"></div>
+</main>
+<footer id="ftr"></footer>
+<script src="common.js"></script>
+<script>
+renderHeader('cards.html');
+const SEC = { summary: '要約', mechanism: '出典で確認できること', actors_flow: '主体と流れ（本文に明示されたものだけ）', reached: '到達点', reservations: '同じ資料の留保', unknowns: '分からないこと', hypothesis_links: '研究者による対応づけ（報告書は対応関係を明示していない）' };
+const PATTERN = { 'PC-001': '役割関係の記載', 'PC-002': '要求の継続', 'PC-003': '局所的な結果利用', 'PC-004': '局所的な結果利用', 'PC-005': '体制と要求の併存', 'PC-006': '調査の記載', 'PC-007': '体制と要求の併存', 'PC-008': '要求の継続', 'PC-009': '追加審査を含む連鎖', 'PC-010': '結果利用の記載', 'PC-011': '要求の継続', 'PC-012': '追加審査を含む連鎖' };
+(async () => {
+  const [inst, events, stats] = await Promise.all([loadJSON('institutions'), loadJSON('events'), loadJSON('stats')]);
+  let cards = []; try { cards = await loadJSON('practice_cards'); } catch (e) { cards = []; }
+  document.getElementById('ftr').textContent = `リリース ${stats.release_version}。出典: 日本医学教育評価機構「評価結果」。`;
+  const I = Object.fromEntries(inst.map(i => [i.institution_id, i])); const U = Object.fromEntries(events.map(e => [e.doc_id, e]));
+  const pageLink = (ref) => { const m = ref.match(/^(.+):p(\d+)$/); if (!m) return esc(ref); const e = U[m[1]]; return e && e.source_url ? `<a href="${esc(e.source_url)}#page=${m[2]}" target="_blank" rel="noopener">${esc(I[e.institution_id]?.name || m[1])} ${esc(e.eval_year)} p.${m[2]}</a>` : esc(ref); };
+  const refs = (text, c) => { const map = {}; (c.span_pages || '').split(';').forEach((p, i) => { map[(c.span_ids_order || [])[i] || i] = p; }); return esc(text).replace(/\[(ES-\d{6})\]/g, (m, id) => { const p = c._map[id]; return p ? `<sup>[${pageLink(p)}]</sup>` : ''; }); };
+  // span_pages は span_ids と同順なので、本文中の [ES-id] を順に対応づける
+  for (const c of cards) { const ids = [...new Set((c.summary + c.mechanism + c.actors_flow + c.reached + c.reservations + c.unknowns + c.hypothesis_links).match(/ES-\d{6}/g) || [])]; const pages = (c.span_pages || '').split(';'); c._map = Object.fromEntries(ids.map((id, i) => [id, pages[i]])); }
+  fillSelect(document.getElementById('f-univ'), [...new Set(cards.map(c => c.institution_id))].map(u => [u, I[u]?.name || u]), 'すべて');
+  fillSelect(document.getElementById('f-pattern'), [...new Set(Object.values(PATTERN))].map(p => [p, p]), 'すべて');
+  function render() {
+    const u = document.getElementById('f-univ').value, p = document.getElementById('f-pattern').value;
+    const rows = cards.filter(c => (!u || c.institution_id === u) && (!p || PATTERN[c.card_id] === p));
+    document.getElementById('count').textContent = cards.length ? `${rows.length} 枚（承認済みのみ）` : '公開されたカードはまだない。';
+    document.getElementById('cards').innerHTML = rows.map(c => `<div class="card" id="${esc(c.card_id)}"><h3>${esc(c.card_id)} ${esc(c.title)} <span class="tag">${esc(PATTERN[c.card_id] || '')}</span> <span class="tag">${esc(c.version)}</span></h3><div class="small">${esc(I[c.institution_id]?.name || '')}</div>` +
+      ['summary', 'mechanism', 'actors_flow', 'reached', 'reservations', 'unknowns'].filter(k => c[k]).map(k => `<div class="sec"><b>${SEC[k]}</b><br>${refs(c[k], c)}</div>`).join('') +
+      (c.hypothesis_links ? `<div class="sec hyp"><b>${SEC.hypothesis_links}</b><br>${refs(c.hypothesis_links, c)}</div>` : '') +
+      `<div class="sec small">注: ${esc(c.footnote || '')}</div></div>`).join('');
+  }
+  document.querySelectorAll('.filters select').forEach(s => s.addEventListener('change', render)); render();
+})().catch(err => { document.getElementById('count').textContent = 'データの読み込みに失敗: ' + err.message; });
+</script>
+</body>
+</html>

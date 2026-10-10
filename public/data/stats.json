@@ -1,0 +1,160 @@
+{
+ "release_version": "jacme-2026.10.0",
+ "built_at": "2026-10-10T23:46:59",
+ "fetched_date": "2026-10-10",
+ "source_page": "https://www.jacme.or.jp/accreditation/evaluation_results.php",
+ "n_institutions": 82,
+ "n_institutions_two_cycles": 38,
+ "n_events": 125,
+ "events_by_review_type": {
+  "main": 120,
+  "additional": 4,
+  "notice": 1
+ },
+ "events_by_year": {
+  "2013": 2,
+  "2014": 3,
+  "2015": 6,
+  "2016": 6,
+  "2017": 12,
+  "2018": 14,
+  "2019": 11,
+  "2020": 7,
+  "2021": 13,
+  "2022": 13,
+  "2023": 13,
+  "2024": 13,
+  "2025": 11,
+  "不明": 1
+ },
+ "events_by_standard_family": {
+  "WFME2015系(Ver.2.x)": 107,
+  "不明": 1,
+  "WFME2012系(日本版2013/Ver.1.30)": 17
+ },
+ "events_by_cycle_main": {
+  "1": 82,
+  "2": 38
+ },
+ "n_judgments": 8905,
+ "judgments_by_value": {
+  "適合": 5632,
+  "部分的適合": 3122,
+  "評価を実施せず": 144,
+  "不適合": 7
+ },
+ "judgments_by_level_value": {
+  "B": {
+   "適合": 2891,
+   "部分的適合": 1552,
+   "不適合": 4,
+   "評価を実施せず": 9
+  },
+  "Q": {
+   "適合": 2741,
+   "部分的適合": 1570,
+   "評価を実施せず": 135,
+   "不適合": 3
+  }
+ },
+ "n_comments": 12364,
+ "comments_by_type": {
+  "特色ある点": 5185,
+  "改善のための示唆": 2850,
+  "改善のための助言": 3992,
+  "追加審査におけるコメント": 337
+ },
+ "comments_by_tone": {
+  "positive": 5185,
+  "desirable": 2902,
+  "must": 4068,
+  "other": 191,
+  "confirm": 18
+ },
+ "flags": {
+  "retrospective_reassessment": {
+   "false": 98,
+   "true": 22,
+   "not_applicable": 5
+  },
+  "mixed_standard": {
+   "false": 118,
+   "true": 6,
+   "not_applicable": 1
+  }
+ },
+ "validation": {
+  "n_checks": 93,
+  "n_fail": 0,
+  "summary_counts_checked": 123,
+  "summary_counts_mismatch": 0,
+  "n_quarantined_judgments": 1
+ },
+ "n_source_pdfs": 164,
+ "themes": {
+  "n_tagged_rows": 18648,
+  "comments_by_theme": {
+   "T12_mission_governance": 2283,
+   "T04_ir_quality_improvement": 2880,
+   "T05_participation": 1767,
+   "T01_outcome_based": 1609,
+   "T11_curriculum_content_structure": 1816,
+   "T08_social_accountability": 1302,
+   "T10a_digital_ai": 575,
+   "T09_scientific_method": 603,
+   "T02_clinical_clerkship": 628,
+   "T13_resources_facilities_partnership": 968,
+   "T03_assessment_feedback": 1596,
+   "T06_fair_admission_support": 1057,
+   "T07_faculty_development": 1018,
+   "T00_none": 259,
+   "T10b_international": 287
+  },
+  "codebook": "v1.1",
+  "model": "jev-1.13.0",
+  "note": "テーマは型付き判定モデル（TypeSafe Jev）の自動付与。妥当性の確認は別モデル（ChatGPT）による盲検判定との比較（60件×3回）で、人の参照判定ではない。T11・T13 の閾値は独立に検証されていない。集計の単位は大学（審査イベント）。"
+ },
+ "practice_cards": {
+  "n_approved": 12,
+  "version": "v1.0",
+  "note": "取り組みカードは別モデル（ChatGPT）の盲検判定（出典スパンとの対応）を経て公開。人による全件確認は未了。",
+  "rounds": [
+   {
+    "round": 1,
+    "result": "承認0/修正12",
+    "packet": "consult/audit/cards_judgment_packet.md",
+    "response": "consult/20261010_chatgpt_cards_judgment_raw.md",
+    "conversation": "https://chatgpt.com/c/6aca3ebc-5670-83ee-918a-0a9420404088"
+   },
+   {
+    "round": 2,
+    "result": "承認9/修正3（PC-005, PC-010, PC-012 は差し替え文を適用）",
+    "packet": "consult/audit/cards_judgment_packet_v2.md",
+    "response": "consult/20261010_chatgpt_cards_judgment_v2_raw.md",
+    "conversation": "https://chatgpt.com/c/6aca4529-5004-83e8-b210-3c0751988fe9"
+   }
+  ]
+ },
+ "changelog": [
+  {
+   "date": "2026-10-10",
+   "version": "jacme-2026.10.0",
+   "note": "初版。82大学・125文書。判定・コメント件数・審査イベントの構造化。"
+  },
+  {
+   "date": "2026-10-10",
+   "version": "jacme-2026.10.0",
+   "note": "テーマタグ（codebook v1.1、Jev）を全コメントに付与し、テーマ別の集計を追加。T11・T13 は信頼性が低い。"
+  },
+  {
+   "date": "2026-10-10",
+   "version": "jacme-2026.10.0",
+   "note": "IR・内部質保証の取り組みカード（6大学12枚）を公開。別モデルの盲検判定を経ており、人による全件確認は未了。"
+  }
+ ],
+ "notes": [
+  "報告書の本文とPDFは再配布しない。原文はJACMEの元PDFを参照する。",
+  "評価員個人は分析・表示の単位にしない。大学の順位・総合点は作らない。",
+  "後年再評価フラグは「本審査の判定が実地調査後の改善を含むか」を指し、追加審査・公表文は対象外（not_applicable）。値は報告書の該当箇所を型付き判定モデル（TypeSafe Jev）に読ませた確率を閾値（0.8以上=あり、0.2以下=なし）で写像したもの。中間は未確認。版混在は、下位領域の選択問題と本文の版の明記がそろう場合に「あり」としている。人による確認は未了。"
+ ]
+}

@@ -1,0 +1,42 @@
+{
+ "run_id": "full_v1.1",
+ "n_comments": 12364,
+ "n_judged_ids": 12364,
+ "n_lines": 12364,
+ "bad_lines": 0,
+ "n_missing": 0,
+ "n_extra": 0,
+ "n_duplicate_ids": 0,
+ "codebook_version_current": "v1.1",
+ "codebook_versions_in_run": [
+  "v1.1"
+ ],
+ "thresholds_current": {
+  "default": 0.3,
+  "per_theme": {
+   "T13_resources_facilities_partnership": 0.6
+  },
+  "not": 0.2
+ },
+ "thresholds_in_run_match": true,
+ "models_in_run": [
+  "jev-1.13.0"
+ ],
+ "question_hash_in_run": [
+  "None"
+ ],
+ "input_hashes": {
+  "canonical/comments.csv": "bf89159d490fbb4c54be7054c4540bf4479612de1f1024ef32656248106215c9",
+  "canonical/private/comment_text.csv": "901c0ff3f9d28c05b91b1674f71c4954dac9f802f21d26ef02e79c23ac42fecb",
+  "tags_jsonl": "70a426d4840cef705ee065708b977c64b322e24904b2bcaefbbd91d0f6ddba4e",
+  "codebook": "cd2529f6e54e15fa348dc6d40089ca9af332d069cb39f0cbd79f1cfcb638bff0"
+ },
+ "input_hashes_note": "20_tag_full_jev.py は実行開始時の入力ハッシュを記録していなかった run についてはここで事後に計算した値（この run の後に comments.csv が変わっていないことは別途 id 集合の一致で担保）",
+ "built_at": "2026-10-10T21:52:53",
+ "complete": true,
+ "problems": [],
+ "output_hashes": {
+  "canonical/comment_tags.csv": "048d922d67188c83abff279516b8fff0885e388d64bc9f2a28673cc81b4e338e",
+  "canonical/comment_classes.csv": "0815f95a49188f51d84916d105cb381ba136c6a92646b1d3b385bd92c6a861f1"
+ }
+}

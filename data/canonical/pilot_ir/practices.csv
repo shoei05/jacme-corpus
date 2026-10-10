@@ -1,0 +1,13 @@
+practice_id,institution_id,title,theme,concept_ids,first_doc_id,last_doc_id,status
+PR-001,INST-038,IR部門とカリキュラム評価委員会による教育プログラム評価の体制,T04,7.1;9.0,evaluation_report17,evaluation_report101,記載あり
+PR-002,INST-038,同窓会と連携した学生・卒業生の実績分析,T04,7.3,evaluation_report17,evaluation_report101,記載あり
+PR-003,INST-038,入試形態別の入学後成績の分析と選抜方針への反映,T04,7.3,evaluation_report101,evaluation_report101,記載あり
+PR-004,INST-042,IR室の設置と教務情報の収集・解析,T04,7.1;9.0,evaluation_report39,evaluation_report116,記載あり
+PR-005,INST-042,学生・卒業生・就職先への学修成果調査と分析,T04,7.2;7.3,evaluation_report39,evaluation_report116,記載あり
+PR-006,INST-042,実績分析に基づく入試枠の変更,T04,7.3,evaluation_report116,evaluation_report116,記載あり
+PR-007,INST-069,教学IRセンターを中心とした教育プログラム評価の仕組み,T04,7.1,evaluation_report98,evaluation_report97,記載あり
+PR-008,INST-069,学生・卒業生の実績の収集と分析,T04,7.3,evaluation_report98,evaluation_report97,要求のみ
+PR-009,INST-018,IR室の設置と教育プログラム評価の仕組み,T04,7.1,evaluation_report16,evaluation_report90,記載あり
+PR-010,INST-011,IR部門の情報に基づく定例会議とリトリートでのカリキュラム改善,T04,7.1,evaluation_report5,evaluation_report5,記載あり
+PR-011,INST-005,IRセンターの設置から評価委員会の設置まで（1巡目→2巡目→追加審査）,T04,7.1;9.0,evaluation_report9,evaluation_report108,記載あり
+PR-012,INST-011,IR部門の体制整備の後、2巡目で評価組織の設置が改めて要求された,T04,7.1,evaluation_report5,evaluation_report_02_01,記載あり

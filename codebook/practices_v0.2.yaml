@@ -1,0 +1,292 @@
+version: practices_v0.2
+date: '2026-10-10'
+scope: IR・内部質保証パイロット（6大学14報告書）。取り組み・主体・関係・時点の表の定義。
+principles:
+- 原文は引用しない。表の文章（title, description, summary）はこちらの言葉で書く。根拠は evidence_spans の span_id で結ぶ。
+- 本文が沈黙しているところは 不明 のままにする。要求文から現状を推測しない。
+- 「記載された過程」「報告書の因果叙述」「研究者の仮説」を process_kind で分ける。
+- 評価員個人は主体にしない。大学の順位・総合点は作らない。
+tables:
+  evidence_spans:
+    key: span_id (ES-nnnnnn)
+    columns:
+    - doc_id
+    - segment_type(comment|sohyo|gaihyo)
+    - ref_id
+    - pdf_page_start
+    - pdf_page_end
+    - printed_page
+    - area
+    - subarea
+    - level
+    - comment_type
+    - char_start
+    - char_end
+    - match_status
+    - source_txt
+    - verified
+    public:
+    - span_id
+    - doc_id
+    - segment_type
+    - pdf_page_start
+    - pdf_page_end
+    - area
+    - subarea
+    - level
+  actors:
+    key: actor_id (AC-nnn)
+    columns:
+    - institution_id
+    - label
+    - actor_type
+    - aliases
+    - notes
+    actor_type:
+    - IR部門
+    - 教育プログラム評価組織
+    - カリキュラム委員会
+    - 執行部・統轄組織
+    - 自己点検組織
+    - 教員組織
+    - 学生
+    - 卒業生・同窓会
+    - 外部評価者・外部機関
+    - 事務
+    - 学外医療機関
+    - 不明
+    - unspecified
+    rule: 主体は報告書に記載された組織・集団。固有名はそのまま（組織名は事実）。人名は使わない。
+  practices:
+    key: practice_id (PR-nnn)
+    columns:
+    - institution_id
+    - title
+    - theme
+    - concept_ids
+    - description
+    - first_doc_id
+    - last_doc_id
+    - status
+    status:
+    - 記載あり
+    - 要求のみ
+    - 不明
+    rule: 取り組みは「ある大学の、ある対象についての仕組み・活動」。同じ対象が別の審査で再び記載されたら同じ practice_id に observation を足す。
+  practice_observations:
+    key: obs_id (PO-nnn)
+    columns:
+    - practice_id
+    - doc_id
+    - event_id
+    - comment_id
+    - span_ids
+    - claim_type
+    - statement_time_role
+    - stage
+    - result_use
+    - outcome_type
+    - process_kind
+    - judgment_context
+    - note
+    claim_type:
+      実施: 活動が行われている・行われたと述べる
+      体制・予定: 組織・規程・体制が存在する、または予定・計画を述べる（実施の明示なし）
+      要求: 〜すべき／〜が望まれる／〜が期待される
+      基準文: 評価基準の引き写し（コメントには通常現れない）
+      不明: 判定できない
+    statement_time_role:
+      今回: 今回の審査（実地調査または追加審査の時点）の所見
+      旧審査再掲: 以前の審査のコメントが再掲されたもの（追加審査報告書の「本審査での評価」欄の特色・助言・示唆は原則これ）
+      過去: 今回より前の時点の事実として述べられたもの（年次が明示され、現在の状態を述べていない）
+      将来: 予定・計画として述べられたもの
+      不明: 判定できない
+      note_retrospective: '後年再評価の文書（例: 千葉 5 は 2014 年の評価に 2017 年 5 月までの改善を併せたもの）では、今回＝「再評価時点までの状態」。文単位で初回と再評価を分けられないため、observation の note に観察期間を書き、時点を細分しない。'
+    stage:
+    - D1 設計・整備
+    - D2 運用
+    - D3 点検・評価
+    - D4 結果利用
+    - N0 記載なし
+    - N1 段階決定不能
+    result_use:
+      なし: 結果の利用について記載がない
+      局所: 特定の対象（入試枠、科目など）で結果が使われたと記載
+      全体: プログラム全体を対象とした利用が記載されている（効果の確認ではない）
+      要求: 利用が要求されている（記載はない）
+      不明: 判定できない
+    outcome_type:
+    - 体制
+    - 情報・分析
+    - 教育の変更
+    - 学修成果
+    - 不明
+    - N/A
+    process_kind:
+      記載された過程: 主体・行為・対象の三つがそろって本文に書かれている（誰が何を何に対して）
+      報告書の因果叙述: 「〜に基づき」「〜を受けて」など因果をことばで述べるが、過程の詳細（主体か対象）が欠ける
+      不明: 主体または行為が本文に無い（要求文、対象だけの文など）
+      研究者の仮説: こちらが複数の記載を結んで推定したもの（本文に明示はない）
+    stage_examples:
+    - form: 評価結果を反映させる体制が整備されている
+      code: D1
+      note: 体制の存在だけ（CM-011332 型）。D4 ではない
+    - form: IRセンターを設置した
+      code: D1
+    - form: 仕組みが構築され、実践されている
+      code: D2
+    - form: IR室が設置されて稼働している
+      code: D2
+    - form: 調査を実施し、フィードバックを得ている
+      code: D3
+    - form: 分析結果に基づいて入試枠を変更した
+      code: D4
+      note: result_use=局所
+    - form: IRの情報に基づき会議でカリキュラムを改善している
+      code: D4
+      note: result_use=全体。改善の内容は不明
+    - form: 評価結果をカリキュラムに反映すべきである
+      code: 要求 D4
+    outcome_type_rule: claim_type=要求 のときは N/A（結果の記載がない）。
+    statement_time_role_rule: '時点は規則で決める: 追加審査報告書の本審査欄=旧審査再掲、それ以外=今回。年次が明示され現在の状態でない文は 過去、予定・計画の語が主張の中心なら 将来。Jev には「予定・計画として述べているか」を noul で別に聞き、将来は人が確定する。'
+  actor_relations:
+    key: rel_id (AR-nnn)
+    columns:
+    - obs_id
+    - from_actor_id
+    - to_actor_id
+    - relation
+    - explicit
+    - span_ids
+    - note
+    relation:
+    - 収集
+    - 分析
+    - 提供・報告
+    - 評価
+    - 決定
+    - 立案
+    - 実施
+    - 参加
+    - 連携
+    - 要求
+    - 不明
+    explicit:
+    - true
+    - false
+  practice_links:
+    key: link_id (PL-nnn)
+    columns:
+    - from_obs_id
+    - to_obs_id
+    - link_type
+    - basis
+    - note
+    link_type:
+      同一取り組みの経時: 同じ取り組みが別の審査で再び記載された
+      旧審査再掲: 追加審査報告書に再掲された同文
+      要求の継続: 同趣旨の要求が後の審査でも出ている
+      要求への応答: 後の審査の記載が、前の要求に対応する内容になっている
+    basis:
+    - 同文
+    - 同対象の明示
+    - 研究者の仮説
+  public_practice_cards:
+    key: card_id (PC-nnn)
+    columns:
+    - card_id
+    - practice_id
+    - institution_id
+    - title
+    - summary
+    - mechanism
+    - actors_flow
+    - reached
+    - reservations
+    - unknowns
+    - hypothesis_links
+    - footnote
+    - span_ids
+    - approved
+    - approved_by
+    - approved_at
+    - version
+    rule: 文章はこちらの言葉。各主張に span_id を付ける。approved=true のものだけ公開。公開時に文字 n-gram の近接検査を通す。
+    sections:
+      summary: 要約（何に使ったか→根拠→限界）
+      mechanism: 出典で確認できること
+      actors_flow: 主体と流れ（矢印は 情報の出所／利用／報告／要求 のいずれかを明記。本文に明示されたものだけ）
+      reached: 到達点
+      reservations: 同じ資料の留保
+      unknowns: 分からないこと
+      hypothesis_links: 研究者による対応づけ（報告書は対応関係を明示していない）
+      footnote: 注
+      span_ids: 出典（文書と物理ページ）
+    rules:
+    - 各事実文に [ES-nnnnnn] を付ける。span が無い主張は書かないか「分からないこと」へ移す。
+    - 「記載がない」ではなく「このカードの出典範囲では確認できない」と書き、未確認と未実施を分ける。
+    - 体制（D1）・運用（D2）・点検（D3）・結果利用（D4）・教育効果を区別する。D1〜D4 は記述の分類で大学の評価ではない。
+decisions_2026_10_10:
+- 'D1 と D2: 組織・仕組み・規程が存在する／設置されたとだけ述べる文（「体制が整備されている」「設置した」）は D1。D2 は対象を伴う活動が明示されている文（「〜を収集している」「〜を実施している」「運用している」）。「構築され実践されている」は D2。'
+- result_use=全体 は「利用の対象範囲がプログラム全体に及ぶと記載されている」ことを意味し、効果の確認ではない。カードにも同じ注記を置く。
+- 要求への応答（basis=研究者の仮説）はカードでは事実の要約と分け、「研究者による対応づけ。報告書は対応関係を明示していない」と明示した別区画にだけ載せる。
+- '主体が明示されない行為: 大学ごとの仮の主体「主体の記載なし」（actor_type=unspecified）を置き、関係は explicit=false で残す。表示は「主体は明示されていない」。'
+- '後年再評価の報告書を含む比較では、観察期間（例: 2014年度＋2017年5月までの改善）を必ず併記する。'
+- 旧審査再掲は追加審査報告書内の本審査欄の再掲（同文、構造上のもの）。要求の継続は後の審査の所見として同対象の要求が再び出ること。別のものとして扱う。
+- 'Phase 3 の評価を受けて: process_kind は主体・行為・対象がそろう文だけを記載された過程とする。outcome_type は要求文で N/A。time_role は規則で決め、Jev には予定・計画の有無だけを聞く。'
+paraphrase_check:
+  rule: 出典コメントとは連続8文字、コーパス全体とは連続12文字の一致を違反とする。主体名（actors）、下位領域名、評価基準の定型語（下記）は除外する。
+  criteria_terms:
+  - 教育プログラム
+  - モニタと評価
+  - 教育課程と学修成果
+  - 学修成果
+  - カリキュラムとその主な構成要素
+  - 学生の進歩
+  - 課題の特定と対応
+  - 評価の結果をカリキュラムに
+  - 教員と学生からのフィードバック
+  - 学生と卒業生の実績
+  - 使命と意図した学修成果
+  - 資源の提供
+  - 入学時成績
+  - 背景と状況
+  - 学生の選抜
+  - カリキュラム立案
+  - 学生カウンセリング
+  - 教育の関係者
+  - 継続的改良
+  - 教育プログラム評価
+  - 入学選抜時の成績と入学後の成績
+  - 総括的なフィードバック
+  - 6年間の教育プログラム
+  - データ収集・分析
+  - 教育成果の検証
+  - 課題の特定
+  - PDCAサイクル
+  - 自己点検
+site_palette:
+  validated_with: dataviz validate_palette.js（light/dark）
+  group_light:
+  - '#3b7dd8'
+  - '#d9742a'
+  - '#b53a35'
+  - '#7b62b8'
+  - '#4a9a44'
+  group_dark:
+  - '#4f8fe0'
+  - '#c9742e'
+  - '#c43d6e'
+  - '#9a86d6'
+  - '#5aa85a'
+  judgment_light:
+  - '#2f8f5b'
+  - '#d9931f'
+  - '#b8322f'
+  - 'neutral #9a9a9a'
+  judgment_dark:
+  - '#3fa06c'
+  - '#b47c1e'
+  - '#cf4a6a'
+  - 'neutral #7d7d7d'
+  note: 部分的適合の黄は対面コントラスト3:1未満の警告があり、凡例・表・ツールチップで補う。評価を実施せず は無彩色の中立。

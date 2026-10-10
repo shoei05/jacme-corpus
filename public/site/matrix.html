@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>テーマ・下位領域×審査の行列 | JACME評価報告書コーパス</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<header id="hdr"></header>
+<main>
+  <h1>テーマ・下位領域×審査の行列</h1>
+  <p class="lead">行は改革テーマ（T01〜T13）または共通概念ID（36下位領域）、列は審査の種類。表示単位は大学（審査イベント）で、コメント件数ではない。</p>
+  <div class="note" id="relnote">テーマは型付き判定モデル（TypeSafe Jev）が各コメントに自動付与したもの。妥当性の確認は別モデル（ChatGPT）による盲検判定との比較（60件×3回）であり、人の参照判定ではない。T11・T13 の閾値は独立に検証されていない。大学の順位や総合点は作らない。</div>
+  <div class="filters">
+    <label>行の軸<select id="f-axis"><option value="theme">改革テーマ（T01〜T13）</option><option value="concept">下位領域（concept_id）</option></select></label>
+    <label>指標<select id="f-mode"></select></label>
+    <label>水準<select id="f-level"><option value="B">基本的水準</option><option value="Q">質的向上のための水準</option></select></label>
+    <label id="l-type">コメント種別<select id="f-type"></select></label>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div style="overflow:auto">
+  <table class="matrix" id="tbl"><thead></thead><tbody></tbody></table>
+  </div>
+  <p class="small" id="foot"></p>
+  <h2 id="defs-h" hidden>テーマの定義（公開コードブック、定義のみ）</h2>
+  <div style="overflow:auto"><table id="defs" hidden><thead><tr><th>ID</th><th>名称</th><th>定義</th><th>含む</th><th>含まない</th><th class="num">閾値</th><th>信頼性</th></tr></thead><tbody></tbody></table></div>
+</main>
+<footer id="ftr"></footer>
+<script src="common.js"></script>
+<script>
+renderHeader('matrix.html');
+(async () => {
+  const [events, concepts, judg, cc, stats] = await Promise.all([loadJSON('events'), loadJSON('concepts'), loadJSON('judgments'), loadJSON('comment_counts'), loadJSON('stats')]);
+  let themeCounts = [], codebook = [];
+  try { [themeCounts, codebook] = await Promise.all([loadJSON('theme_counts'), loadJSON('codebook_themes')]); } catch (e) { /* テーマ未整備 */ }
+  const hasThemes = codebook.length > 0;
+  document.getElementById('ftr').textContent = `リリース ${stats.release_version}（取得日 ${stats.fetched_date}）。出典: 日本医学教育評価機構「評価結果」。`;
+  const E = Object.fromEntries(events.map(e => [e.event_id, e]));
+  const COLS = [['main', '1', '本審査 1巡目'], ['main', '2', '本審査 2巡目'], ['additional', '', '追加審査']];
+  const colOf = e => COLS.findIndex(c => c[0] === e.review_type && (c[0] !== 'main' || c[1] === e.cycle));
+  const types = [...new Set(cc.map(c => c.type))];
+  fillSelect(document.getElementById('f-type'), types.map(t => [t, t]), '全種別');
+  const seq = ['--seq-0', '--seq-1', '--seq-2', '--seq-3', '--seq-4', '--seq-5'];
+  const shade = p => `var(${seq[Math.min(5, Math.floor(p * 6))]})`;
+  const ink = p => p >= 0.5 ? '#fff' : 'var(--ink)';
+  const axisSel = document.getElementById('f-axis'), modeSel = document.getElementById('f-mode');
+  if (!hasThemes) { axisSel.value = 'concept'; axisSel.disabled = true; document.getElementById('relnote').textContent = 'テーマ（意味タグ）は未整備のため、下位領域（concept_id）で代替している。'; }
+  function setModes() {
+    const axis = axisSel.value;
+    modeSel.innerHTML = axis === 'theme'
+      ? '<option value="theme_univ">テーマに言及のある大学の割合</option>'
+      : '<option value="part">部分的適合以下の大学の割合</option><option value="cmt">コメントがある大学数（種別別）</option>';
+    document.getElementById('l-type').hidden = !(axis === 'theme' || modeSel.value === 'cmt');
+  }
+  // 判定のある大学（列×水準）= 分母
+  function denominators(L) {
+    const denom = Array(COLS.length).fill(null).map(() => new Set());
+    for (const j of judg) { if (j.level !== L) continue; const e = E[j.event_id]; const k = colOf(e); if (k >= 0) denom[k].add(e.institution_id); }
+    return denom;
+  }
+  function renderTheme() {
+    const L = document.getElementById('f-level').value, T = document.getElementById('f-type').value;
+    const denom = denominators(L);
+    const cell = {};
+    for (const t of themeCounts) {
+      if (t.level !== L || (T && t.type !== T)) continue; const e = E[t.event_id]; const k = colOf(e); if (k < 0) continue;
+      const key = t.theme + '|' + k; cell[key] ??= { inst: new Set(), n: 0 }; cell[key].inst.add(e.institution_id); cell[key].n += Number(t.n_comments);
+    }
+    document.querySelector('#tbl thead').innerHTML = '<tr><th>テーマ</th><th>名称</th>' + COLS.map((c, k) => `<th class="num">${c[2]}<br><span class="small">判定あり ${denom[k].size} 大学</span></th>`).join('') + '<th>信頼性</th></tr>';
+    document.querySelector('#tbl tbody').innerHTML = codebook.map(c => '<tr>' + `<td>${esc(c.theme.split('_')[0])}</td><td class="name">${esc(c.name)}</td>` + COLS.map((_, k) => {
+      const v = cell[c.theme + '|' + k]; const d = denom[k].size;
+      if (d === 0) return '<td class="cell na">該当なし</td>';
+      if (!v) return `<td class="cell" title="言及のある大学 0 / 判定あり ${d}">0/${d}<br><span style="font-size:12px">0 件</span></td>`;
+      const p = v.inst.size / d;
+      return `<td class="cell" style="background:${shade(p)};color:${ink(p)}" title="${esc(c.name)}: 言及のある大学 ${v.inst.size} / 判定あり ${d}（コメント ${v.n} 件）">${v.inst.size}/${d}<br><span style="font-size:12px">${(p * 100).toFixed(0)}%・${v.n} 件</span></td>`;
+    }).join('') + `<td>${c.reliability === 'low' ? '<span class="tag">低い</span>' : c.reliability === 'derived' ? '<span class="tag unknown">導出</span>' : ''}</td></tr>`).join('');
+    document.getElementById('legend').innerHTML = '<span>割合</span>' + seq.map(s => `<span class="sw" style="background:var(${s})"></span>`).join('') + '<span>0% → 100%</span>';
+    document.getElementById('foot').textContent = 'セルは「当該テーマのコメントが1件以上ある大学数 / 当該列・水準で判定のある大学数」。小さい数字はコメント件数（参考）。T00 は「どのテーマにも該当しない」と判定されたコメント。テーマの付与は自動で、確認は別モデル（ChatGPT）による盲検判定との比較（60件×3回）のみ。';
+    document.getElementById('defs-h').hidden = false; document.getElementById('defs').hidden = false;
+    document.querySelector('#defs tbody').innerHTML = codebook.map(c => `<tr><td>${esc(c.theme.split('_')[0])}</td><td>${esc(c.name)}</td><td>${esc(c.definition)}</td><td class="small">${esc(c.include)}</td><td class="small">${esc(c.exclude)}</td><td class="num">${esc(c.threshold)}</td><td>${c.reliability === 'low' ? '低い（閾値は独立に未検証）' : c.reliability === 'derived' ? '導出' : '盲検判定との比較で確認'}</td></tr>`).join('');
+  }
+  function renderConcept() {
+    const mode = modeSel.value, L = document.getElementById('f-level').value, T = document.getElementById('f-type').value;
+    const cell = {}; const denom = denominators(L);
+    for (const j of judg) {
+      if (j.level !== L) continue; const e = E[j.event_id]; const k = colOf(e); if (k < 0) continue;
+      const key = j.concept_id + '|' + k; cell[key] ??= { n: new Set(), part: new Set(), nae: new Set() };
+      cell[key].n.add(e.institution_id);
+      if (j.judgment === '部分的適合' || j.judgment === '不適合') cell[key].part.add(e.institution_id);
+      if (j.judgment === '評価を実施せず') cell[key].nae.add(e.institution_id);
+    }
+    const cm = {};
+    for (const c of cc) {
+      if (c.level !== L || (T && c.type !== T)) continue; const e = E[c.event_id]; const k = colOf(e); if (k < 0) continue;
+      const key = c.concept_id + '|' + k; cm[key] ??= { inst: new Set(), n: 0 }; cm[key].inst.add(e.institution_id); cm[key].n += Number(c.n);
+    }
+    document.querySelector('#tbl thead').innerHTML = '<tr><th>概念ID</th><th>下位領域名</th>' + COLS.map((c, k) => `<th class="num">${c[2]}<br><span class="small">判定あり ${denom[k].size} 大学</span></th>`).join('') + '</tr>';
+    document.querySelector('#tbl tbody').innerHTML = concepts.map(c => '<tr>' + `<td>${esc(c.concept_id)}</td><td class="name">${esc(c.name)}</td>` + COLS.map((_, k) => {
+      const key = c.concept_id + '|' + k; const v = cell[key];
+      if (mode === 'part') {
+        if (!v || v.n.size === 0) return '<td class="cell na">該当なし</td>';
+        const judged = v.n.size - v.nae.size;
+        if (judged === 0) return `<td class="cell na" title="全て評価を実施せず">評価を実施せず ${v.nae.size}</td>`;
+        const p = v.part.size / judged;
+        return `<td class="cell" style="background:${shade(p)};color:${ink(p)}" title="${LBL.level[L]}: 部分的適合以下 ${v.part.size} / 判定あり ${judged} 大学${v.nae.size ? `（評価を実施せず ${v.nae.size} を除く）` : ''}">${v.part.size}/${judged}<br><span style="font-size:12px">${(p * 100).toFixed(0)}%</span></td>`;
+      } else {
+        const m = cm[key]; if (!v || v.n.size === 0) return '<td class="cell na">該当なし</td>';
+        if (!m) return `<td class="cell" title="判定あり ${v.n.size} 大学、該当種別のコメントなし">0/${v.n.size}</td>`;
+        const p = m.inst.size / v.n.size;
+        return `<td class="cell" style="background:${shade(p)};color:${ink(p)}" title="コメントがある大学 ${m.inst.size} / 判定あり ${v.n.size}（コメント件数 ${m.n}）">${m.inst.size}/${v.n.size}<br><span style="font-size:12px">${m.n} 件</span></td>`;
+      }
+    }).join('') + '</tr>').join('');
+    document.getElementById('legend').innerHTML = '<span>割合</span>' + seq.map(s => `<span class="sw" style="background:var(${s})"></span>`).join('') + `<span>0% → 100%</span><span style="margin-left:12px">「該当なし」は判定の記載がないセル（0ではない）</span>`;
+    document.getElementById('foot').textContent = mode === 'part'
+      ? '分母は当該列・当該下位領域で判定が記載された大学数。「評価を実施せず」は分母から除く。追加審査は改善報告書に基づく再評価であり、本審査の判定と単純に比較しない。'
+      : 'セルの主値はコメントが1件以上ある大学数 / 判定が記載された大学数。小さい数字はコメント件数（参考）。';
+    document.getElementById('defs-h').hidden = true; document.getElementById('defs').hidden = true;
+  }
+  function render() { (axisSel.value === 'theme' ? renderTheme : renderConcept)(); }
+  axisSel.addEventListener('change', () => { setModes(); render(); });
+  setModes();
+  modeSel.addEventListener('change', () => { document.getElementById('l-type').hidden = !(axisSel.value === 'theme' || modeSel.value === 'cmt'); render(); });
+  document.getElementById('f-level').addEventListener('change', render); document.getElementById('f-type').addEventListener('change', render);
+  render();
+})().catch(err => { document.getElementById('foot').textContent = 'データの読み込みに失敗: ' + err.message; });
+</script>
+</body>
+</html>

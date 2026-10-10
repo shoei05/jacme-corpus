@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>資料・審査イベント検索 | JACME評価報告書コーパス</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<header id="hdr"></header>
+<main>
+  <h1>資料・審査イベント検索</h1>
+  <p class="lead">大学、評価年度、審査種別、基準系列で絞り込む。原文は各行のリンクからJACMEの元PDFで確認する。</p>
+  <div class="filters">
+    <label>大学<select id="f-univ"></select></label>
+    <label>評価年度<select id="f-year"></select></label>
+    <label>審査種別<select id="f-type"></select></label>
+    <label>基準系列<select id="f-family"></select></label>
+    <label>後年再評価<select id="f-retro"></select></label>
+    <label>版混在<select id="f-mixed"></select></label>
+  </div>
+  <div class="count" id="count"></div>
+  <div style="overflow:auto">
+  <table id="tbl">
+    <thead><tr>
+      <th>大学</th><th>設置</th><th>評価年度</th><th>審査種別</th><th>巡</th><th>基準版</th><th>基準系列</th>
+      <th>後年再評価</th><th>版混在</th><th>観察期間</th>
+      <th class="num">B 適合/部分/不適合/未実施</th><th class="num">Q 適合/部分/不適合/未実施</th><th class="num">コメント数</th><th>元PDF</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+  </div>
+  <p class="small">後年再評価は「本審査の判定が実地調査後の改善を含むか」を指し、追加審査・公表文は「対象外」。後年再評価・版混在の値は、報告書の「はじめに」等の該当箇所を型付き判定モデル（TypeSafe Jev）に読ませた確率を閾値で「あり」「なし」に写像したもので、中間は「未確認」。版混在は、下位領域の選択問題と本文の版の明記がそろう場合に「あり」としている。判定の確認は未了のため、判断に使う前に元PDFで確認する。追加審査の判定は該当項目のみで、本審査時の判定は judgment_before として別に保持している。</p>
+</main>
+<footer id="ftr"></footer>
+<script src="common.js"></script>
+<script>
+renderHeader('index.html');
+(async () => {
+  const [inst, events, stats] = await Promise.all([loadJSON('institutions'), loadJSON('events'), loadJSON('stats')]);
+  const I = Object.fromEntries(inst.map(i => [i.institution_id, i]));
+  document.getElementById('ftr').textContent = `リリース ${stats.release_version}（取得日 ${stats.fetched_date}）。出典: 日本医学教育評価機構「評価結果」。本文・PDFは再配布せず、元PDFへリンクする。`;
+  const uniq = (arr, f) => [...new Set(arr.map(f))].filter(Boolean);
+  fillSelect(document.getElementById('f-univ'), inst.map(i => [i.institution_id, i.name]), 'すべて');
+  fillSelect(document.getElementById('f-year'), uniq(events, e => e.eval_year).sort().map(v => [v, v + '年度']), 'すべて');
+  fillSelect(document.getElementById('f-type'), ['main', 'additional', 'notice'].map(v => [v, LBL.review_type[v]]), 'すべて');
+  fillSelect(document.getElementById('f-family'), uniq(events, e => e.standard_family).sort().map(v => [v, v]), 'すべて');
+  fillSelect(document.getElementById('f-retro'), ['true', 'false', 'unknown', 'not_applicable'].map(v => [v, LBL.flag[v]]), 'すべて');
+  fillSelect(document.getElementById('f-mixed'), ['true', 'false', 'unknown', 'not_applicable'].map(v => [v, LBL.flag[v]]), 'すべて');
+  const sels = [...document.querySelectorAll('.filters select')];
+  function render() {
+    const [u, y, t, f, r, m] = sels.map(s => s.value);
+    const rows = events.filter(e => (!u || e.institution_id === u) && (!y || e.eval_year === y) && (!t || e.review_type === t) &&
+      (!f || e.standard_family === f) && (!r || e.retrospective_reassessment === r) && (!m || e.mixed_standard === m))
+      .sort((a, b) => (I[a.institution_id].name).localeCompare(I[b.institution_id].name, 'ja') || (a.eval_year || '').localeCompare(b.eval_year || ''));
+    document.getElementById('count').textContent = `${rows.length} 件の審査イベント（${new Set(rows.map(e => e.institution_id)).size} 大学）`;
+    const obs = e => (e.observation_start === 'unknown' && e.observation_end === 'unknown') ? '<span class="tag unknown">未確認</span>' : `${esc(e.observation_start)}〜${esc(e.observation_end)}`;
+    const cnt = (e, L) => e.has_summary_counts === 'true' ? `${e[L + '_comp']}/${e[L + '_part']}/${e[L + '_non']}/${e[L + '_nae']}` : (e.review_type === 'notice' ? '該当なし' : '集計文なし');
+    document.querySelector('#tbl tbody').innerHTML = rows.map(e => `<tr>
+      <td>${esc(I[e.institution_id].name)}</td><td>${esc(I[e.institution_id].type)}</td><td>${esc(e.eval_year) || '不明'}</td>
+      <td>${LBL.review_type[e.review_type]}</td><td>${esc(e.cycle) || '—'}</td><td>${esc(e.standard_version_declared) || '不明'}</td><td>${esc(e.standard_family) || '不明'}</td>
+      <td>${flagTag(e.retrospective_reassessment)}</td><td>${flagTag(e.mixed_standard)}</td><td>${obs(e)}</td>
+      <td class="num">${cnt(e, 'b')}</td><td class="num">${cnt(e, 'q')}</td><td class="num">${esc(e.n_comments)}</td>
+      <td>${e.source_url ? `<a href="${esc(e.source_url)}" target="_blank" rel="noopener">PDF</a>` : '—'}</td></tr>`).join('');
+  }
+  sels.forEach(s => s.addEventListener('change', render));
+  render();
+})().catch(err => { document.getElementById('count').textContent = 'データの読み込みに失敗: ' + err.message; });
+</script>
+</body>
+</html>

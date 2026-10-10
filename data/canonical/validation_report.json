@@ -1,0 +1,491 @@
+{
+ "n_checks": 93,
+ "n_fail": 0,
+ "checks": [
+  {
+   "check": "pk_unique:institutions.institution_id",
+   "status": "ok",
+   "detail": "dup=[]"
+  },
+  {
+   "check": "pk_unique:source_manifest.file",
+   "status": "ok",
+   "detail": "dup=[]"
+  },
+  {
+   "check": "pk_unique:documents.doc_id",
+   "status": "ok",
+   "detail": "dup=[]"
+  },
+  {
+   "check": "pk_unique:review_events.event_id",
+   "status": "ok",
+   "detail": "dup=[]"
+  },
+  {
+   "check": "pk_unique:concepts.concept_id",
+   "status": "ok",
+   "detail": "dup=[]"
+  },
+  {
+   "check": "pk_unique:judgments.judgment_id",
+   "status": "ok",
+   "detail": "dup=[]"
+  },
+  {
+   "check": "pk_unique:comments.comment_id",
+   "status": "ok",
+   "detail": "dup=[]"
+  },
+  {
+   "check": "pk_unique:standard_items(family,subarea)",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "natural_key_unique:judgments(doc,subarea,level)",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "pk_unique:comment_text",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "allowed_values:review_events.mixed_subareas",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:review_events.jev_clef_agree",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:review_events.regex_retrospective",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:review_events.regex_mixed",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:review_events.review_type",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:documents.review_type",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:review_events.retrospective_reassessment",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:review_events.mixed_standard",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:review_events.verification_status",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:judgments.level",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:comments.level",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:judgments.judgment",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:judgments.judgment_before",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:comments.type",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:comments.tone",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:standard_items.relation",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:institutions.has_two_cycles",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "allowed_values:documents.has_summary_counts",
+   "status": "ok",
+   "detail": "{}"
+  },
+  {
+   "check": "no_blank_judgment",
+   "status": "ok",
+   "detail": "0"
+  },
+  {
+   "check": "no_blank_comment_text",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "ref:documents.institution_id->institutions",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:review_events.institution_id->institutions",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:review_events.doc_id->documents",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:judgments.event_id->review_events",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:judgments.doc_id->documents",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:judgments.institution_id->institutions",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:judgments.concept_id->concepts",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:comments.event_id->review_events",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:comments.doc_id->documents",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:comments.institution_id->institutions",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:comments.concept_id->concepts",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "ref:standard_items.concept_id->concepts",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "ref:documents.file->source_manifest",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "ref:comment_text<->comments(1:1)",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "ref:event_evidence.event_id->review_events",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "ref:evaluators.doc_id->documents",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "review_events_one_per_document",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "flag_true_has_evidence",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "flag_never_false_without_verification",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "model_flags_backed_by_jev_probability",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "not_applicable_only_for_non_main",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "summary_counts_match",
+   "status": "ok",
+   "detail": "checked=123 mismatch=[]"
+  },
+  {
+   "check": "main_36_subareas_have_72_judgments",
+   "status": "ok",
+   "detail": "[]"
+  },
+  {
+   "check": "notice_has_no_judgments",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "n_judgments_column_matches",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "idmap_covers:institutions",
+   "status": "ok",
+   "detail": "missing=0"
+  },
+  {
+   "check": "idmap_covers:review_events",
+   "status": "ok",
+   "detail": "missing=0"
+  },
+  {
+   "check": "idmap_covers:judgments",
+   "status": "ok",
+   "detail": "missing=0"
+  },
+  {
+   "check": "idmap_covers:comments",
+   "status": "ok",
+   "detail": "missing=0"
+  },
+  {
+   "check": "concepts_36_all_used",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "tags_every_comment_has_all_themes",
+   "status": "ok",
+   "detail": "comments_with_rows=12364 bad_counts=0"
+  },
+  {
+   "check": "tags_theme_codes_allowed",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "tags_tagged_values",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "tags_prob_consistent_with_threshold",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "tags_T00_exclusive",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "classes_one_per_comment",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "classes_codes_allowed",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "classes_requested_only_for_request_types",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_pk_unique:actors",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_pk_unique:practices",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_pk_unique:practice_observations",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_pk_unique:actor_relations",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_pk_unique:practice_links",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_pk_unique:public_practice_cards",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_ref:actors.institution",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_ref:practices.institution",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_ref:observations",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_ref:observations.span_ids->evidence_spans",
+   "status": "ok",
+   "detail": "evidence_spans.csv が無いか span_id 不明"
+  },
+  {
+   "check": "pilot_ref:relations",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_ref:links",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:claim_type",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:statement_time_role",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:stage",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:result_use",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:outcome_type",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:process_kind",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:actor_type",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:relation",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:link_type",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_allowed:practice.status",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_cards_approved_values",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_observation_consistency:request_has_result_use_request",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "check": "pilot_observation_consistency:actor_same_institution",
+   "status": "ok",
+   "detail": ""
+  }
+ ],
+ "tag_tables_checked": true,
+ "counts": {
+  "institutions": 82,
+  "source_manifest": 165,
+  "documents": 125,
+  "review_events": 125,
+  "concepts": 36,
+  "standard_items": 72,
+  "judgments": 8905,
+  "comments": 12364
+ },
+ "private_counts": {
+  "comment_text": 12364,
+  "sohyo": 124,
+  "area_gaihyo": 1078,
+  "event_evidence": 272,
+  "evaluators": 845
+ },
+ "summary_counts_checked": 123,
+ "summary_counts_mismatch": 0
+}

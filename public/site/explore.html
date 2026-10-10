@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>図で見る | JACME評価報告書コーパス</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root { --g1: #3b7dd8; --g2: #d9742a; --g3: #4a9a44; --g4: #b53a35; --g5: #7b62b8; --j-ok: #2f8f5b; --j-part: #d9931f; --j-non: #b8322f; --j-nae: #9a9a9a; --chart-bg: var(--bg); }
+:root[data-theme="dark"] { --g1: #4f8fe0; --g2: #c9742e; --g3: #5aa85a; --g4: #c43d6e; --g5: #9a86d6; --j-ok: #3fa06c; --j-part: #b47c1e; --j-non: #cf4a6a; --j-nae: #7d7d7d; --chart-bg: var(--bg); }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
+.tabs button { font: inherit; padding: 6px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg); color: var(--ink-2); cursor: pointer; }
+.tabs button.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); font-weight: 600; }
+.view { display: none; } .view.on { display: block; }
+.chart { position: relative; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); overflow: hidden; }
+.chart text.lab { paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; fill: var(--ink); }
+.chart svg { display: block; width: 100%; height: auto; }
+.tip { position: fixed; pointer-events: none; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,.12); max-width: 320px; z-index: 10; display: none; }
+.panel { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-top: 12px; background: var(--bg); }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btns button, .btns label.sw { font: inherit; font-size: 13px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink-2); cursor: pointer; }
+.legend .sw { border-radius: 3px; }
+.tablewrap { overflow: auto; max-height: 480px; margin-top: 8px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; } @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+input[type=range] { width: 160px; }
+.hint { font-size: 13px; color: var(--ink-2); margin: 6px 0; }
+</style>
+</head>
+<body>
+<header id="hdr"></header>
+<main>
+  <h1>図で見る</h1>
+  <p class="lead">改革テーマのつながり、38大学の判定の流れ、記述の段階、大学×下位領域の判定、承認済みカードの組織の流れ。公開データ（集計・判定・承認済みカード）だけで描く。</p>
+  <div class="note">テーマは型付き判定モデル（TypeSafe Jev）の自動付与で、別モデル（ChatGPT）による盲検判定との比較（60件×3回）で確認した。カードは別モデルの判定を経て公開し、人による全件確認は未了。大学の順位・総合点は作らない。</div>
+  <div class="tabs" id="tabs">
+    <button data-v="net" class="on">改革テーマのネットワーク</button><button data-v="flow">1巡目→2巡目の流れ</button><button data-v="stage">段階の階段図</button><button data-v="mosaic">大学×下位領域</button><button data-v="org">組織の流れ図</button>
+  </div>
+
+  <section class="view on" id="v-net">
+    <div class="filters">
+      <label>巡・審査<select id="n-col"><option value="main1">本審査 1巡目（82校）</option><option value="main2">本審査 2巡目（38校）</option><option value="additional">追加審査（4校）</option></select></label>
+      <label>コメント種別<select id="n-type"><option value="request">改善要求（助言・示唆・追加審査コメント）</option><option value="positive">特色ある点</option></select></label>
+      <label>辺の最小重み（Jaccard）<input type="range" id="n-min" min="0" max="0.6" step="0.02" value="0.2"><span id="n-minv" class="small">0.20</span></label>
+      <div class="btns"><button id="n-reset">配置を戻す</button><button id="n-svg">SVG を保存</button><label class="sw"><input type="checkbox" id="n-table"> 表で見る</label></div>
+    </div>
+    <div class="legend" id="n-legend"></div>
+    <div class="chart" id="n-chart"></div>
+    <div class="hint">ノードの大きさ＝そのテーマに言及のある大学数。辺＝同じコメントに両テーマが付いた大学（イベント）の集合の Jaccard。ドラッグで動かし、ホイールで拡大、クリックで右の詳細。</div>
+    <div class="tablewrap" id="n-tablewrap" hidden></div>
+    <div class="panel" id="n-panel" hidden></div>
+  </section>
+
+  <section class="view" id="v-flow">
+    <div class="filters">
+      <label>下位領域<select id="f-sub"></select></label>
+      <label>水準<select id="f-level"><option value="B">基本的水準</option><option value="Q">質的向上のための水準</option></select></label>
+      <div class="btns"><button id="f-svg">SVG を保存</button><label class="sw"><input type="checkbox" id="f-table"> 表で見る</label></div>
+    </div>
+    <div class="hint">まず36下位領域の概観（基本的水準、38校）。行をクリックするとその下位領域の流れを描く。</div>
+    <div class="tablewrap" id="f-overview" style="max-height:260px"></div>
+    <div class="legend" id="f-legend"></div>
+    <div class="chart" id="f-chart"></div>
+    <div class="hint" id="f-note"></div>
+    <div class="tablewrap" id="f-tablewrap" hidden></div>
+    <div class="panel" id="f-panel" hidden></div>
+  </section>
+
+  <section class="view" id="v-stage">
+    <div class="filters">
+      <label>巡・審査<select id="s-col"><option value="main1">本審査 1巡目</option><option value="main2">本審査 2巡目</option><option value="additional">追加審査</option></select></label>
+      <label>単位<select id="s-unit"><option value="n_comments">コメント数</option><option value="n_universities">大学数</option></select></label>
+      <div class="btns"><button id="s-svg">SVG を保存</button><label class="sw"><input type="checkbox" id="s-table"> 表で見る</label></div>
+    </div>
+    <div class="legend" id="s-legend"></div>
+    <div class="chart" id="s-chart"></div>
+    <div class="hint">左＝特色ある点に記載された現状の段階（observed）、右＝改善要求が求める到達段階（requested）。D1〜D4 は記述の分類で大学の評価ではない。「記載なし」「段階決定不能」「不明」は図から除き、件数を表に示す。</div>
+    <div class="tablewrap" id="s-tablewrap" hidden></div>
+  </section>
+
+  <section class="view" id="v-mosaic">
+    <div class="filters">
+      <label>水準<select id="m-level"><option value="B">基本的水準</option><option value="Q">質的向上のための水準</option></select></label>
+      <label>巡・審査<select id="m-col"><option value="main1">本審査 1巡目（82校）</option><option value="main2">本審査 2巡目（38校）</option><option value="additional">追加審査（追加審査の評価）</option></select></label>
+      <div class="btns"><button id="m-svg">SVG を保存</button><label class="sw"><input type="checkbox" id="m-table"> 表で見る</label></div>
+    </div>
+    <div class="legend" id="m-legend"></div>
+    <div class="chart" id="m-chart"></div>
+    <div class="hint">大学は五十音順。合計や順位は作らない。セルをクリックすると JACME の元 PDF（判定行のページが分かる文書はそのページ）を開く。空欄は判定の記載がないセル。</div>
+    <div class="tablewrap" id="m-tablewrap" hidden></div>
+  </section>
+
+  <section class="view" id="v-org">
+    <div class="filters">
+      <label>大学<select id="o-univ"></select></label>
+      <div class="btns"><button id="o-svg">SVG を保存</button><label class="sw"><input type="checkbox" id="o-table"> 表で見る</label></div>
+    </div>
+    <div class="hint">承認済みカードの「主体と流れ」に本文で明示された矢印だけを描く（情報の出所／利用／報告／要求）。左が1巡目、右が2巡目または追加審査。主体が明示されない関係は描かない。</div>
+    <div id="o-charts"></div>
+    <div class="tablewrap" id="o-tablewrap" hidden></div>
+  </section>
+</main>
+<div class="tip" id="tip"></div>
+<footer id="ftr"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="common.js"></script>
+<script>
+renderHeader('explore.html');
+const tip = document.getElementById('tip');
+const showTip = (ev, html) => { tip.innerHTML = html; tip.style.display = 'block'; const x = Math.min(ev.clientX + 12, window.innerWidth - 330), y = Math.min(ev.clientY + 12, window.innerHeight - 80); tip.style.left = x + 'px'; tip.style.top = y + 'px'; };
+const hideTip = () => { tip.style.display = 'none'; };
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const JCOL = { '適合': '--j-ok', '部分的適合': '--j-part', '不適合': '--j-non', '評価を実施せず': '--j-nae' };
+const JORD = ['適合', '部分的適合', '不適合', '評価を実施せず'];
+const GROUP = { T01: 'g1', T11: 'g1', T02: 'g1', T09: 'g1', T03: 'g2', T04: 'g2', T05: 'g3', T06: 'g3', T07: 'g3', T08: 'g4', T10a: 'g4', T10b: 'g4', T13: 'g4', T12: 'g5', T00: 'g5' };
+const GNAME = { g1: '教育内容・成果', g2: '評価・質保証', g3: '人・参画・支援', g4: '社会・環境・資源', g5: '統治・その他' };
+const gcol = t => `var(--${GROUP[t.split('_')[0]] || 'g5'})`;
+const short = t => t.split('_')[0];
+const SHORTN = { T01: '学修成果', T02: '臨床実習', T03: '学生評価', T04: 'IR・質保証', T05: '参画', T06: '選抜・支援', T07: '教員・FD', T08: '地域・社会', T09: 'EBM・研究', T10a: 'デジタル', T10b: '国際', T11: '教育内容・構造', T12: '使命・統轄', T13: '資源・連携', T00: '該当なし' };
+const label = t => `${short(t)} ${SHORTN[short(t)] || ''}`;
+function saveSVG(svgEl, name) {
+  const clone = svgEl.cloneNode(true); const vars = ['--g1', '--g2', '--g3', '--g4', '--g5', '--j-ok', '--j-part', '--j-non', '--j-nae', '--ink', '--ink-2', '--ink-3', '--line', '--chart-bg', '--seq-1', '--seq-2', '--seq-3', '--seq-4', '--seq-5', '--bg'];
+  let s = new XMLSerializer().serializeToString(clone); for (const v of vars) s = s.split(`var(${v})`).join(cssv(v));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([s], { type: 'image/svg+xml' })); a.download = name; a.click();
+}
+document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + b.dataset.v)); window.dispatchEvent(new Event('resize')); }));
+function legend(el, items) { el.innerHTML = items.map(([c, l]) => `<span class="sw" style="background:${c}"></span><span>${esc(l)}</span>`).join(''); }
+function table(el, cols, rows) { el.innerHTML = '<table><thead><tr>' + cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map(v => `<td>${v}</td>`).join('') + '</tr>').join('') + '</tbody></table>'; }
+
+(async () => {
+  const [inst, events, judg, concepts, cb, nodesAll, edgesAll, subAll, stageAll, jpages, cards, stats] = await Promise.all(['institutions', 'events', 'judgments', 'concepts', 'codebook_themes', 'theme_nodes', 'theme_edges', 'theme_subareas', 'theme_stage', 'judgment_pages', 'practice_cards', 'stats'].map(n => loadJSON(n).catch(() => [])));
+  document.getElementById('ftr').textContent = `リリース ${stats.release_version}。出典: 日本医学教育評価機構「評価結果」。`;
+  const I = Object.fromEntries(inst.map(i => [i.institution_id, i])); const E = Object.fromEntries(events.map(e => [e.event_id, e])); const CN = Object.fromEntries(concepts.map(c => [c.concept_id, c.name]));
+  const TN = Object.fromEntries(cb.map(c => [c.theme, c])); const themes = cb.map(c => c.theme).filter(t => t !== 'T00_none');
+  const colOf = e => e.review_type === 'main' ? 'main' + e.cycle : e.review_type;
+  const JP = Object.fromEntries(jpages.map(j => [j.judgment_id, j.pdf_page]));
+  const byName = (a, b) => a.localeCompare(b, 'ja');
+
+  // ================= 1. ネットワーク =================
+  (function net() {
+    const wrap = document.getElementById('n-chart'); let sim, svg, g, zoom; const net = {};
+    const sel = id => document.getElementById(id);
+    legend(sel('n-legend'), Object.entries(GNAME).map(([k, v]) => [`var(--${k})`, v]));
+    function draw() {
+      const col = sel('n-col').value, tg = sel('n-type').value, min = +sel('n-min').value; sel('n-minv').textContent = min.toFixed(2);
+      const nodes = nodesAll.filter(n => n.col === col && n.type_group === tg && n.theme !== 'T00_none').map(n => ({ id: n.theme, n_univ: n.n_universities, n_events: n.n_events, univs: n.universities }));
+      const ids = new Set(nodes.map(n => n.id));
+      const links = edgesAll.filter(e => e.col === col && e.type_group === tg && e.jaccard >= min && ids.has(e.source) && ids.has(e.target)).map(e => ({ source: e.source, target: e.target, w: e.jaccard, both: e.n_events_both, either: e.n_events_either }));
+      const W = Math.max(320, wrap.clientWidth), H = Math.min(560, Math.max(380, W * 0.6));
+      wrap.innerHTML = ''; svg = d3.select(wrap).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', W).attr('height', H); g = svg.append('g');
+      zoom = d3.zoom().scaleExtent([0.5, 4]).on('zoom', ev => g.attr('transform', ev.transform)); svg.call(zoom);
+      const r = d3.scaleSqrt().domain([0, d3.max(nodes, d => d.n_univ) || 1]).range([6, 30]);
+      const wscale = d3.scaleLinear().domain([min, 1]).range([1, 7]);
+      const link = g.append('g').selectAll('line').data(links).join('line').attr('stroke', 'var(--ink-3)').attr('stroke-opacity', 0.5).attr('stroke-width', d => wscale(d.w))
+        .on('mousemove', (ev, d) => showTip(ev, `<b>${esc(short(d.source.id || d.source))} × ${esc(short(d.target.id || d.target))}</b><br>両方に言及: ${d.both} 大学 / いずれか: ${d.either} 大学<br>Jaccard ${d.w}`)).on('mouseleave', hideTip);
+      const node = g.append('g').selectAll('g').data(nodes).join('g').style('cursor', 'pointer')
+        .call(d3.drag().on('start', (ev, d) => { if (!ev.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }).on('drag', (ev, d) => { d.fx = ev.x; d.fy = ev.y; }).on('end', (ev, d) => { if (!ev.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+      node.append('circle').attr('r', d => r(d.n_univ)).attr('fill', d => gcol(d.id)).attr('stroke', 'var(--chart-bg)').attr('stroke-width', 2);
+      node.append('text').attr('class', 'lab').text(d => label(d.id)).attr('dy', d => r(d.n_univ) + 13).attr('text-anchor', 'middle').attr('font-size', 11);
+      node.on('mousemove', (ev, d) => showTip(ev, `<b>${esc(short(d.id))} ${esc(TN[d.id]?.name || '')}</b><br>言及のある大学 ${d.n_univ}（イベント ${d.n_events}）<br>${GNAME[GROUP[short(d.id)]]}`)).on('mouseleave', hideTip).on('click', (ev, d) => panel(d, col, tg));
+      const pad = 40;
+      sim = d3.forceSimulation(nodes).force('link', d3.forceLink(links).id(d => d.id).distance(d => 150 - 90 * d.w)).force('charge', d3.forceManyBody().strength(-240)).force('x', d3.forceX(W / 2).strength(0.08)).force('y', d3.forceY(H / 2).strength(0.1)).force('collide', d3.forceCollide(d => r(d.n_univ) + 22))
+        .on('tick', () => { nodes.forEach(d => { d.x = Math.max(pad + r(d.n_univ), Math.min(W - pad - r(d.n_univ), d.x)); d.y = Math.max(pad + r(d.n_univ), Math.min(H - pad - r(d.n_univ) - 10, d.y)); }); link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y); node.attr('transform', d => `translate(${d.x},${d.y})`); })
+        .on('end', fit);
+      function fit() { if (!nodes.length) return; const xs = nodes.map(d => d.x), ys = nodes.map(d => d.y); const x0 = Math.min(...xs) - 50, x1 = Math.max(...xs) + 50, y0 = Math.min(...ys) - 40, y1 = Math.max(...ys) + 40; const k = Math.min(1.6, 0.95 / Math.max((x1 - x0) / W, (y1 - y0) / H)); svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(W / 2 - k * (x0 + x1) / 2, H / 2 - k * (y0 + y1) / 2).scale(k)); }
+      net.fit = fit;
+      table(sel('n-tablewrap'), ['テーマ', '名称', '大学数', 'イベント数', '辺（Jaccard ≥ 最小重み）'], nodes.map(n => [esc(short(n.id)), esc(TN[n.id]?.name || ''), n.n_univ, n.n_events, links.filter(l => (l.source.id || l.source) === n.id || (l.target.id || l.target) === n.id).map(l => `${short((l.source.id || l.source) === n.id ? (l.target.id || l.target) : (l.source.id || l.source))} ${l.w}`).join('、')]));
+    }
+    function panel(d, col, tg) {
+      const subs = subAll.filter(s => s.col === col && s.type_group === tg && s.theme === d.id).sort((a, b) => b.n_comments - a.n_comments).slice(0, 8);
+      const linked = cards.filter(c => (c.summary + c.mechanism).length && TN[d.id] && (c.title.includes(TN[d.id].name.slice(0, 2)) || d.id === 'T04_ir_quality_improvement'));
+      const p = sel('n-panel'); p.hidden = false;
+      p.innerHTML = `<h3 style="margin:0 0 6px">${esc(short(d.id))} ${esc(TN[d.id]?.name || '')}</h3><div class="small">${esc(TN[d.id]?.definition || '')}</div>
+        <p><b>言及のある大学</b> ${d.n_univ}（イベント ${d.n_events}）。<b>関連する下位領域（コメント数の多い順）</b> ${subs.map(s => `${esc(s.concept_id)} ${esc(CN[s.concept_id] || '')}（${s.n_comments}）`).join('、') || '—'}</p>
+        <p><b>承認済みカード</b> ${linked.length ? linked.map(c => `<a href="cards.html#${esc(c.card_id)}">${esc(c.card_id)}</a> ${esc(c.title)}`).join('；') : 'このテーマに紐づくカードは未作成'}</p>
+        <details><summary>大学一覧（五十音順、${d.n_univ}校）</summary><div class="small">${esc(d.univs.split(';').sort(byName).join('、'))}</div></details>`;
+    }
+    ['n-col', 'n-type'].forEach(id => sel(id).addEventListener('change', draw)); sel('n-min').addEventListener('input', draw);
+    sel('n-reset').addEventListener('click', () => { if (sim) { sim.alpha(1).restart(); } });
+    sel('n-svg').addEventListener('click', () => saveSVG(wrap.querySelector('svg'), 'jacme_theme_network.svg'));
+    sel('n-table').addEventListener('change', e => { sel('n-tablewrap').hidden = !e.target.checked; });
+    window.addEventListener('resize', () => { if (document.getElementById('v-net').classList.contains('on')) draw(); }); draw();
+  })();
+
+  // ================= 2. 1巡目→2巡目の流れ =================
+  (function flow() {
+    const sel = id => document.getElementById(id); const wrap = sel('f-chart');
+    fillSelect(sel('f-sub'), concepts.map(c => [c.concept_id, `${c.concept_id} ${c.name}`]), '');
+    const jIndex = {}; for (const j of judg) jIndex[j.event_id + '|' + j.concept_id + '|' + j.level] = j.judgment;
+    legend(sel('f-legend'), JORD.map(j => [`var(${JCOL[j]})`, j]));
+    const paired = inst.filter(i => i.has_two_cycles === 'true');
+    const evOf = (u, cyc) => events.find(e => e.institution_id === u && e.review_type === 'main' && e.cycle === cyc);
+    const pairEv = paired.map(i => ({ u: i, e1: evOf(i.institution_id, '1'), e2: evOf(i.institution_id, '2') }));
+    const RANK = { '適合': 3, '部分的適合': 2, '不適合': 1 };
+    function overview(L) {
+      return concepts.map(c => { let up = 0, down = 0, same = 0, na = 0; for (const p of pairEv) { const a = jIndex[(p.e1 || {}).event_id + '|' + c.concept_id + '|' + L], b = jIndex[(p.e2 || {}).event_id + '|' + c.concept_id + '|' + L]; if (!(a in RANK) || !(b in RANK)) { na++; continue; } if (RANK[b] > RANK[a]) up++; else if (RANK[b] < RANK[a]) down++; else same++; } return { c, up, down, same, na }; });
+    }
+    function drawOverview() {
+      const L = sel('f-level').value; const ov = overview(L); const cur = sel('f-sub').value;
+      sel('f-overview').innerHTML = '<table><thead><tr><th>下位領域</th><th class="num">判定が上がった（例: 部分的適合→適合）</th><th class="num">判定が下がった（例: 適合→部分的適合）</th><th class="num">同じ判定</th><th class="num">比較不能</th></tr></thead><tbody>' +
+        ov.map(o => `<tr data-sub="${esc(o.c.concept_id)}" style="cursor:pointer${o.c.concept_id === cur ? ';background:var(--accent-soft)' : ''}"><td>${esc(o.c.concept_id)} ${esc(o.c.name)}</td><td class="num">${o.up}</td><td class="num">${o.down}</td><td class="num">${o.same}</td><td class="num">${o.na}</td></tr>`).join('') + '</tbody></table>';
+      sel('f-overview').querySelectorAll('tr[data-sub]').forEach(tr => tr.addEventListener('click', () => { sel('f-sub').value = tr.dataset.sub; draw(); }));
+      return ov;
+    }
+    { const ov = overview('B'); const best = ov.slice().sort((a, b) => (b.up + b.down) - (a.up + a.down) || a.c.concept_id.localeCompare(b.c.concept_id, undefined, { numeric: true }))[0]; sel('f-sub').value = best ? best.c.concept_id : '7.1'; }
+    function draw() {
+      const sub = sel('f-sub').value, L = sel('f-level').value; drawOverview();
+      const rows = paired.map(i => { const e1 = evOf(i.institution_id, '1'), e2 = evOf(i.institution_id, '2'); const j1 = judg.find(j => e1 && j.event_id === e1.event_id && j.concept_id === sub && j.level === L), j2 = judg.find(j => e2 && j.event_id === e2.event_id && j.concept_id === sub && j.level === L); return { u: i, e1, e2, a: j1?.judgment || '記載なし', b: j2?.judgment || '記載なし' }; });
+      const cats = [...JORD, '記載なし'].filter(c => rows.some(r => r.a === c || r.b === c));
+      const W = Math.max(320, wrap.clientWidth), H = 360, pad = { l: 120, r: 120, t: 20, b: 20 }, colW = 26;
+      const tot = rows.length; const yscale = (H - pad.t - pad.b) / tot;
+      const left = {}, right = {}; let y = pad.t; cats.forEach(c => { const n = rows.filter(r => r.a === c).length; left[c] = { y0: y, y1: y + n * yscale, n }; y += n * yscale + (n ? 6 : 0); }); y = pad.t; cats.forEach(c => { const n = rows.filter(r => r.b === c).length; right[c] = { y0: y, y1: y + n * yscale, n }; y += n * yscale + (n ? 6 : 0); });
+      wrap.innerHTML = ''; const svg = d3.select(wrap).append('svg').attr('viewBox', `0 0 ${W} ${H + 30}`); const g = svg.append('g');
+      const colOfJ = c => c === '記載なし' ? 'var(--ink-3)' : `var(${JCOL[c]})`;
+      cats.forEach(c => { if (left[c].n) g.append('rect').attr('x', pad.l).attr('y', left[c].y0).attr('width', colW).attr('height', left[c].y1 - left[c].y0).attr('fill', colOfJ(c)).attr('rx', 3); if (right[c].n) g.append('rect').attr('x', W - pad.r - colW).attr('y', right[c].y0).attr('width', colW).attr('height', right[c].y1 - right[c].y0).attr('fill', colOfJ(c)).attr('rx', 3);
+        if (left[c].n) g.append('text').attr('class', 'lab').text(`${c} ${left[c].n}`).attr('x', pad.l - 6).attr('y', (left[c].y0 + left[c].y1) / 2 + 4).attr('text-anchor', 'end').attr('font-size', 12);
+        if (right[c].n) g.append('text').attr('class', 'lab').text(`${c} ${right[c].n}`).attr('x', W - pad.r + colW - 20).attr('y', (right[c].y0 + right[c].y1) / 2 + 4).attr('font-size', 12); });
+      const lo = {}, ro = {}; cats.forEach(c => { lo[c] = left[c].y0; ro[c] = right[c].y0; });
+      const bands = []; cats.forEach(a => cats.forEach(b => { const rs = rows.filter(r => r.a === a && r.b === b); if (!rs.length) return; const h = rs.length * yscale; bands.push({ a, b, rs, y0l: lo[a], y1l: lo[a] + h, y0r: ro[b], y1r: ro[b] + h }); lo[a] += h; ro[b] += h; }));
+      const x0 = pad.l + colW, x1 = W - pad.r - colW;
+      g.selectAll('path').data(bands).join('path').attr('d', d => `M${x0},${d.y0l} C${(x0 + x1) / 2},${d.y0l} ${(x0 + x1) / 2},${d.y0r} ${x1},${d.y0r} L${x1},${d.y1r} C${(x0 + x1) / 2},${d.y1r} ${(x0 + x1) / 2},${d.y1l} ${x0},${d.y1l} Z`)
+        .attr('fill', d => colOfJ(d.a)).attr('fill-opacity', 0.45).attr('stroke', 'var(--chart-bg)').attr('stroke-width', 1).style('cursor', 'pointer')
+        .on('mousemove', (ev, d) => showTip(ev, `<b>${esc(d.a)} → ${esc(d.b)}</b><br>${d.rs.length} 大学（${tot}校中）`)).on('mouseleave', hideTip)
+        .on('click', (ev, d) => { const p = sel('f-panel'); p.hidden = false; p.innerHTML = `<h3 style="margin:0 0 6px">${esc(sub)} ${esc(CN[sub])} ${L}: ${esc(d.a)} → ${esc(d.b)}（${d.rs.length}校）</h3><ul class="small">` + d.rs.sort((x, y) => byName(x.u.name, y.u.name)).map(r => `<li>${esc(r.u.name)}: <a href="${esc(r.e1.source_url)}" target="_blank" rel="noopener">1巡目 ${esc(r.e1.eval_year)}</a>（${esc(r.e1.standard_version_declared)}${r.e1.retrospective_reassessment === 'true' ? '、後年再評価' : ''}） → <a href="${esc(r.e2.source_url)}" target="_blank" rel="noopener">2巡目 ${esc(r.e2.eval_year)}</a>（${esc(r.e2.standard_version_declared)}）</li>`).join('') + '</ul>'; });
+      g.append('text').text('1巡目').attr('x', pad.l + colW / 2).attr('y', H + 20).attr('text-anchor', 'middle').attr('font-size', 12).attr('fill', 'var(--ink-2)'); g.append('text').text('2巡目').attr('x', W - pad.r - colW / 2).attr('y', H + 20).attr('text-anchor', 'middle').attr('font-size', 12).attr('fill', 'var(--ink-2)');
+      const retro = rows.filter(r => r.e1?.retrospective_reassessment === 'true').length; const vers = new Set(rows.map(r => r.e1?.standard_version_declared));
+      sel('f-note').textContent = `N = ${tot} 大学（2巡そろう大学）。1巡目の基準版は ${[...vers].join('、')}、2巡目は Ver.2.3x。1巡目のうち ${retro} 校は後年再評価（後年の改善を含む）であり、基準版と観察時点が異なるため単純な変化として読まない。`;
+      table(sel('f-tablewrap'), ['1巡目', '2巡目', '大学数', '大学'], bands.map(d => [esc(d.a), esc(d.b), d.rs.length, esc(d.rs.map(r => r.u.name).sort(byName).join('、'))]));
+    }
+    ['f-sub', 'f-level'].forEach(id => sel(id).addEventListener('change', draw)); sel('f-svg').addEventListener('click', () => saveSVG(wrap.querySelector('svg'), 'jacme_flow.svg')); sel('f-table').addEventListener('change', e => { sel('f-tablewrap').hidden = !e.target.checked; });
+    window.addEventListener('resize', () => { if (document.getElementById('v-flow').classList.contains('on')) draw(); }); draw();
+  })();
+
+  // ================= 3. 段階の階段図 =================
+  (function stage() {
+    const sel = id => document.getElementById(id); const wrap = sel('s-chart');
+    const ST = ['D1_design_setup', 'D2_operation', 'D3_review_evaluation', 'D4_use_of_results']; const SN = { D1_design_setup: 'D1 設計・整備', D2_operation: 'D2 運用', D3_review_evaluation: 'D3 点検・評価', D4_use_of_results: 'D4 結果利用' };
+    const seq = ['--seq-2', '--seq-3', '--seq-4', '--seq-5'];
+    legend(sel('s-legend'), ST.map((s, i) => [`var(${seq[i]})`, SN[s]]));
+    function draw() {
+      const col = sel('s-col').value, unit = sel('s-unit').value;
+      const rows = themes.map(t => { const get = (g, s) => stageAll.filter(x => x.col === col && x.type_group === g && x.theme === t && x.stage === s).reduce((a, x) => a + +x[unit], 0); const obs = ST.map(s => get('positive', s)), req = ST.map(s => get('request', s)); const ex = g => stageAll.filter(x => x.col === col && x.type_group === g && x.theme === t && !ST.includes(x.stage)).reduce((a, x) => a + +x[unit], 0); return { t, obs, req, exo: ex('positive'), exr: ex('request') }; });
+      const W = Math.max(320, wrap.clientWidth), rowH = 26, pad = { l: 150, r: 20, t: 30, b: 10 }, H = pad.t + rows.length * rowH + pad.b, half = (W - pad.l - pad.r) / 2 - 12;
+      const max = d3.max(rows, r => Math.max(d3.sum(r.obs), d3.sum(r.req))) || 1; const x = d3.scaleLinear().domain([0, max]).range([0, half]);
+      wrap.innerHTML = ''; const svg = d3.select(wrap).append('svg').attr('viewBox', `0 0 ${W} ${H}`); const g = svg.append('g');
+      g.append('text').text('特色ある点: 記載された現状の段階').attr('x', pad.l + half).attr('y', 18).attr('text-anchor', 'end').attr('font-size', 12).attr('fill', 'var(--ink-2)');
+      g.append('text').text('改善要求: 求められた到達段階').attr('x', pad.l + half + 24).attr('y', 18).attr('font-size', 12).attr('fill', 'var(--ink-2)');
+      rows.forEach((r, i) => { const y = pad.t + i * rowH; g.append('text').attr('class', 'lab').text(label(r.t)).attr('x', pad.l - 8).attr('y', y + 16).attr('text-anchor', 'end').attr('font-size', 11);
+        let acc = 0; ST.forEach((s, k) => { const v = r.obs[k]; if (!v) return; g.append('rect').attr('x', pad.l + half - x(acc + v)).attr('y', y + 4).attr('width', Math.max(0, x(v) - 1)).attr('height', rowH - 8).attr('fill', `var(${seq[k]})`).on('mousemove', ev => showTip(ev, `<b>${esc(short(r.t))} 特色 ${SN[s]}</b><br>${v}（${unit === 'n_comments' ? 'コメント' : '大学'}）`)).on('mouseleave', hideTip); acc += v; });
+        acc = 0; ST.forEach((s, k) => { const v = r.req[k]; if (!v) return; g.append('rect').attr('x', pad.l + half + 24 + x(acc)).attr('y', y + 4).attr('width', Math.max(0, x(v) - 1)).attr('height', rowH - 8).attr('fill', `var(${seq[k]})`).on('mousemove', ev => showTip(ev, `<b>${esc(short(r.t))} 要求 ${SN[s]}</b><br>${v}（${unit === 'n_comments' ? 'コメント' : '大学'}）`)).on('mouseleave', hideTip); acc += v; }); });
+      g.append('line').attr('x1', pad.l + half + 12).attr('x2', pad.l + half + 12).attr('y1', pad.t).attr('y2', H - pad.b).attr('stroke', 'var(--line)');
+      table(sel('s-tablewrap'), ['テーマ', ...ST.map(s => '特色 ' + SN[s]), '特色 除外（記載なし等）', ...ST.map(s => '要求 ' + SN[s]), '要求 除外（記載なし等）'], rows.map(r => [esc(short(r.t) + ' ' + (TN[r.t]?.name || '')), ...r.obs, r.exo, ...r.req, r.exr]));
+    }
+    ['s-col', 's-unit'].forEach(id => sel(id).addEventListener('change', draw)); sel('s-svg').addEventListener('click', () => saveSVG(wrap.querySelector('svg'), 'jacme_stage.svg')); sel('s-table').addEventListener('change', e => { sel('s-tablewrap').hidden = !e.target.checked; });
+    window.addEventListener('resize', () => { if (document.getElementById('v-stage').classList.contains('on')) draw(); }); draw();
+  })();
+
+  // ================= 4. 大学×下位領域のモザイク =================
+  (function mosaic() {
+    const sel = id => document.getElementById(id); const wrap = sel('m-chart');
+    legend(sel('m-legend'), JORD.map(j => [`var(${JCOL[j]})`, j]));
+    function draw() {
+      const L = sel('m-level').value, col = sel('m-col').value;
+      const evs = events.filter(e => colOf(e) === col); const univs = [...new Set(evs.map(e => e.institution_id))].map(u => I[u]).sort((a, b) => byName(a.name, b.name));
+      const cell = {}; for (const j of judg) { const e = E[j.event_id]; if (colOf(e) !== col || j.level !== L) continue; cell[e.institution_id + '|' + j.concept_id] = { j, e }; }
+      const W = Math.max(320, wrap.clientWidth), pad = { l: 120, t: 60 }, cw = Math.max(8, Math.floor((W - pad.l - 10) / concepts.length)), ch = Math.max(9, Math.min(16, cw)), H = pad.t + univs.length * ch + 10;
+      wrap.innerHTML = ''; const svg = d3.select(wrap).append('svg').attr('viewBox', `0 0 ${W} ${H}`); const g = svg.append('g');
+      concepts.forEach((c, k) => g.append('text').text(c.concept_id).attr('x', pad.l + k * cw + cw / 2).attr('y', pad.t - 6).attr('text-anchor', 'start').attr('transform', `rotate(-60 ${pad.l + k * cw + cw / 2} ${pad.t - 6})`).attr('font-size', 9).attr('fill', 'var(--ink-2)'));
+      univs.forEach((u, i) => { const y = pad.t + i * ch; g.append('text').text(u.name).attr('x', pad.l - 6).attr('y', y + ch - 2).attr('text-anchor', 'end').attr('font-size', Math.min(10, ch - 1)).attr('fill', 'var(--ink)');
+        concepts.forEach((c, k) => { const v = cell[u.institution_id + '|' + c.concept_id]; if (!v) return; const pg = JP[v.j.judgment_id]; const url = v.e.source_url + (pg ? '#page=' + pg : '');
+          g.append('rect').attr('x', pad.l + k * cw + 1).attr('y', y + 1).attr('width', cw - 2).attr('height', ch - 2).attr('rx', 2).attr('fill', `var(${JCOL[v.j.judgment]})`).style('cursor', 'pointer')
+            .on('mousemove', ev => showTip(ev, `<b>${esc(u.name)}</b> ${esc(c.concept_id)} ${esc(CN[c.concept_id])} ${L}<br>${esc(v.j.judgment)}${v.j.judgment_before ? '（本審査時 ' + esc(v.j.judgment_before) + '）' : ''}<br>${esc(v.e.eval_year)}年度 ${esc(v.e.standard_version_declared)}${pg ? ' / PDF p.' + pg : ''}`)).on('mouseleave', hideTip)
+            .on('click', () => window.open(url, '_blank', 'noopener')); }); });
+      table(sel('m-tablewrap'), ['大学', ...concepts.map(c => c.concept_id)], univs.map(u => [esc(u.name), ...concepts.map(c => { const v = cell[u.institution_id + '|' + c.concept_id]; return v ? esc(v.j.judgment.slice(0, 2)) : ''; })]));
+    }
+    ['m-level', 'm-col'].forEach(id => sel(id).addEventListener('change', draw)); sel('m-svg').addEventListener('click', () => saveSVG(wrap.querySelector('svg'), 'jacme_mosaic.svg')); sel('m-table').addEventListener('change', e => { sel('m-tablewrap').hidden = !e.target.checked; });
+    window.addEventListener('resize', () => { if (document.getElementById('v-mosaic').classList.contains('on')) draw(); }); draw();
+  })();
+
+  // ================= 5. 組織の流れ図 =================
+  (function org() {
+    const sel = id => document.getElementById(id); const host = sel('o-charts');
+    // 「A →（種別）→ B」を文ごとに全て拾う。B は「／」で複数ノードに分け、括弧の注は外す
+    function parseFlows(text) {
+      const edges = [];
+      for (const sent of (text || '').split('。')) {
+        const re = /([^\s→（）\[\]。、]+)\s*→（([^）]+)）→\s*([^\[。]+)/g; let m;
+        while ((m = re.exec(sent))) {
+          const from = m[1].replace(/^(?:助言では|また|さらに)/, '').trim(); const label = m[2].trim();
+          for (const raw of m[3].split('／')) { const to = raw.replace(/（[^）]*）/g, '').replace(/など$/, '').trim(); if (from && to) edges.push({ from, label, to }); }
+        }
+      }
+      return edges;
+    }
+    const parsed = cards.map(c => ({ c, edges: parseFlows(c.actors_flow) }));
+    window.__orgParsed = parsed.map(p => ({ card: p.c.card_id, edges: p.edges }));
+    const univs = [...new Set(cards.map(c => c.institution_id))];
+    fillSelect(sel('o-univ'), univs.map(u => [u, I[u].name]), 'すべて');
+    const docYear = c => { const pages = (c.span_pages || '').split(';'); const ev = events.find(e => e.doc_id === (pages[0] || '').split(':')[0]); return ev ? `${ev.eval_year} ${LBL.review_type[ev.review_type]}${ev.cycle ? ' 第' + ev.cycle + '巡' : ''}` : ''; };
+    const wrapName = n => { const parts = []; let t = n; while (t.length > 9 && parts.length < 1) { parts.push(t.slice(0, 9)); t = t.slice(9); } parts.push(t.length > 10 ? t.slice(0, 9) + '…' : t); return parts; };
+    function layers(nodes, edges) {   // 左→右の層（最長路）。自己ループと循環は無視
+      const L = Object.fromEntries(nodes.map(n => [n, 0])); let changed = true, guard = 0;
+      while (changed && guard++ < 50) { changed = false; for (const e of edges) { if (e.from === e.to) continue; if (L[e.to] < L[e.from] + 1) { L[e.to] = L[e.from] + 1; changed = true; } } }
+      return L;
+    }
+    function draw() {
+      const u = sel('o-univ').value; const list = parsed.filter(p => !u || p.c.institution_id === u); host.innerHTML = ''; const rows = [];
+      host.style.display = 'grid'; host.style.gridTemplateColumns = window.innerWidth < 760 ? '1fr' : '1fr 1fr'; host.style.gap = '12px';
+      for (const p of list) {
+        const div = document.createElement('div'); div.className = 'panel'; div.style.margin = '0';
+        div.innerHTML = `<b>${esc(p.c.card_id)}</b> ${esc(p.c.title)}<div class="small">${esc(I[p.c.institution_id].name)} ${esc(docYear(p.c))}</div>`; host.appendChild(div);
+        if (!p.edges.length) { const q = document.createElement('p'); q.className = 'small'; q.textContent = '明示された関係なし（主体や流れが本文に特定されていない）'; div.appendChild(q); continue; }
+        const nodes = [...new Set(p.edges.flatMap(e => [e.from, e.to]))]; const L = layers(nodes, p.edges); const nL = Math.max(...Object.values(L)) + 1;
+        const NW = 132, NH = 38, GX = 70, GY = 18, PADX = 10, PADY = 14; const cols = {}; nodes.forEach(n => (cols[L[n]] ??= []).push(n));
+        const W = PADX * 2 + nL * NW + (nL - 1) * GX, rowsMax = Math.max(...Object.values(cols).map(c => c.length)), H = PADY * 2 + rowsMax * NH + (rowsMax - 1) * GY + 10;
+        const pos = {}; Object.entries(cols).forEach(([l, ns]) => { const colH = ns.length * NH + (ns.length - 1) * GY; ns.forEach((n, i) => { pos[n] = { x: PADX + l * (NW + GX), y: PADY + (H - 2 * PADY - colH) / 2 + i * (NH + GY) }; }); });
+        const ch = document.createElement('div'); ch.className = 'chart'; div.appendChild(ch);
+        const svg = d3.select(ch).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%').style('max-width', W + 'px'); const g = svg.append('g');
+        const mid = 'arr-' + p.c.card_id.replace(/[^A-Za-z0-9]/g, '');
+        svg.append('defs').append('marker').attr('id', mid).attr('viewBox', '0 0 10 10').attr('refX', 9).attr('refY', 5).attr('markerWidth', 7).attr('markerHeight', 7).attr('orient', 'auto-start-reverse').append('path').attr('d', 'M0,0 L10,5 L0,10 z').attr('fill', 'var(--ink-2)');
+        p.edges.forEach(e => { const a = pos[e.from], b = pos[e.to]; let d, mx, my;
+          if (e.from === e.to) { d = `M${a.x + NW},${a.y + NH / 2 - 8} C${a.x + NW + 40},${a.y - 20} ${a.x + NW + 40},${a.y + NH + 20} ${a.x + NW},${a.y + NH / 2 + 8}`; mx = a.x + NW + 34; my = a.y + NH / 2 - 14; }
+          else { const x0 = a.x + NW, y0 = a.y + NH / 2, x1 = b.x, y1 = b.y + NH / 2; d = `M${x0},${y0} C${(x0 + x1) / 2},${y0} ${(x0 + x1) / 2},${y1} ${x1},${y1}`; mx = (x0 + x1) / 2; my = (y0 + y1) / 2 - 6; }
+          g.append('path').attr('d', d).attr('fill', 'none').attr('stroke', 'var(--ink-2)').attr('stroke-width', 1.8).attr('marker-end', `url(#${mid})`).on('mousemove', ev => showTip(ev, `${esc(e.from)} →（${esc(e.label)}）→ ${esc(e.to)}`)).on('mouseleave', hideTip);
+          g.append('text').attr('class', 'lab').text(e.label).attr('x', mx).attr('y', my).attr('text-anchor', 'middle').attr('font-size', 11); rows.push([esc(p.c.card_id), esc(I[p.c.institution_id].name), esc(e.from), esc(e.label), esc(e.to)]); });
+        nodes.forEach(n => { const q = pos[n]; g.append('rect').attr('x', q.x).attr('y', q.y).attr('width', NW).attr('height', NH).attr('rx', 6).attr('fill', 'var(--accent-soft)').attr('stroke', 'var(--accent)');
+          const lines = wrapName(n); lines.forEach((ln, i) => g.append('text').text(ln).attr('x', q.x + NW / 2).attr('y', q.y + (lines.length === 1 ? NH / 2 + 4 : 15 + i * 14)).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', 'var(--ink)').append('title').text(n)); });
+      }
+      if (!list.length) host.innerHTML = '<p class="small">承認済みカードがない。</p>';
+      table(sel('o-tablewrap'), ['カード', '大学', 'から', '関係', 'へ'], rows);
+    }
+    sel('o-univ').addEventListener('change', draw); sel('o-svg').addEventListener('click', () => { host.querySelectorAll('svg').forEach((s, i) => saveSVG(s, `jacme_org_${i + 1}.svg`)); }); sel('o-table').addEventListener('change', e => { sel('o-tablewrap').hidden = !e.target.checked; });
+    window.addEventListener('resize', () => { if (document.getElementById('v-org').classList.contains('on')) draw(); }); draw();
+  })();
+})().catch(err => { document.getElementById('n-chart').textContent = 'データの読み込みに失敗: ' + err.message; });
+</script>
+</body>
+</html>
