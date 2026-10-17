@@ -17,7 +17,7 @@ function fillSelect(sel, values, allLabel) {
   sel.innerHTML = `<option value="">${allLabel}</option>` + values.map(v => `<option value="${esc(v[0])}">${esc(v[1])}</option>`).join('');
 }
 function renderHeader(current) {
-  const pages = [['explore.html', '図で見る'], ['index.html', '資料・審査イベント検索'], ['matrix.html', 'テーマ・下位領域×審査の行列'], ['cards.html', '取り組みカード'], ['pilot.html', '大学別の経時・追加審査'], ['stats.html', '統計・品質・更新履歴']];
+  const pages = [['self-study.html', '自己点検評価報告書'], ['explore.html', '図で見る'], ['index.html', '資料・審査イベント検索'], ['matrix.html', 'テーマ・下位領域×審査の行列'], ['cards.html', '取り組みカード'], ['pilot.html', '大学別の経時・追加審査'], ['stats.html', '統計・品質・更新履歴']];
   document.getElementById('hdr').innerHTML = `<div class="inner"><span class="title">JACME評価報告書コーパス（試作）</span><nav>` +
     pages.map(([h, t]) => `<a href="${h}" class="${h === current ? 'current' : ''}">${t}</a>`).join('') + `</nav></div>`;
 }
